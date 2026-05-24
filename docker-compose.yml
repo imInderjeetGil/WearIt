@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  # 1. Database Service
+  db:
+    image: postgres:15
+    container_name: wearit_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. FastAPI Backend Service
+  backend:
+    build: ./backend
+    container_name: wearit_backend
+    restart: always
+    depends_on:
+      - db
+    # Production mein hum iska port 8000 bahar expose nahi karenge,
+    # kyunki saara traffic Nginx ke through andar aayega.
+    expose:
+      - "8000"
+    env_file:
+      - .env
+    volumes:
+      - ./backend:/app
+
+  # 3. React Frontend + Nginx Proxy Service
+  frontend:
+    build: ./wearit-frontend
+    container_name: wearit_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80" # Bahar ka port 80 seedhe Nginx container se link ho gaya
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro # Hamari custom nginx configuration inject ho gayi
+
+volumes:
+  postgres_data:
