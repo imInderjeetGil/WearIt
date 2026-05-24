@@ -1,31 +1,33 @@
 version: "3.9"
 
 services:
-
+  # 1. Database Service (Ab yeh variables use karega)
   db:
     image: postgres:15
-    container_name: inventory_db
+    container_name: wearit_db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123
-      POSTGRES_DB: inventory
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  app:
-    build: .
-    container_name: inventory_api
+  # 2. FastAPI Backend Service
+  backend:
+    build: ./backend
+    container_name: wearit_backend
+    restart: always
     depends_on:
       - db
     ports:
       - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql://postgres:123@db:5432/inventory
+    env_file:
+      - .env         # Yeh line EC2 par baithi .env se saari values auto-inject karegi
     volumes:
-      - .:/app
+      - ./backend:/app
 
 volumes:
   postgres_data:

@@ -5,8 +5,10 @@ from db.base import Base
 from api import product, auth, cart, order, payment, review
 from fastapi.middleware.cors import CORSMiddleware
 import os
+from dotenv import load_dotenv
 
 Base.metadata.create_all(bind=engine)
+load_dotenv()
 
 ENV = os.getenv("ENV")
 
