@@ -20,12 +20,17 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 1. Main project folder ke andar jao
             cd ~/WearIt
-
-            # 2. GitHub se naya code pull karo
+            
+            # Git ko bolenge ki local server par agar koi untracked ya modified files (jaise config) hain, toh pull se pehle unhe temporary side me rakhe ya ignore kare
+            git stash --include-untracked
+            
+            # Fresh code pull karo
             git pull origin main
-
-            # 3. Docker Compose se fresh build aur deploy karo
+            
+            # Pull hone ke baad agar koi cheez stash ki thi toh use wapas le aao (par .env wahin safe rahegi)
+            git stash pop || true
+            
+            # Fresh build aur deploy
             docker compose down
             docker compose up -d --build
