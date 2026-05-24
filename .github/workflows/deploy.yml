@@ -1,0 +1,31 @@
+name: CI/CD Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main  # Jab bhi main branch par push hoga, ye pipeline chalegi
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # 1. Main project folder ke andar jao
+            cd ~/WearIt
+
+            # 2. GitHub se naya code pull karo
+            git pull origin main
+
+            # 3. Docker Compose se fresh build aur deploy karo
+            docker compose down
+            docker compose up -d --build
