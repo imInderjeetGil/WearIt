@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div style="min-height: 80vh; display:flex; align-items:center; justify-content:center; padding: 2rem;">
+
+    <div style="width:100%; max-width:520px;">
+
+        <div style="text-align:center; margin-bottom:2rem;">
+            <div style="font-size:2.5rem; margin-bottom:0.5rem;">✏️</div>
+            <h1 style="font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:var(--navy);">Edit Product</h1>
+            <p style="color:#64748b; font-size:0.9rem;">Update product details below</p>
+        </div>
+
+        <div class="card" style="padding:2rem;">
+
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; font-weight:600; font-size:0.85rem; color:var(--navy); margin-bottom:0.5rem;">Product Name</label>
+                <input id="name" type="text"
+                style="width:100%; border:2px solid #e2e8f0; padding:0.7rem 1rem; border-radius:8px; font-size:0.95rem; outline:none; box-sizing:border-box; transition: border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='#e2e8f0'">
+            </div>
+
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; font-weight:600; font-size:0.85rem; color:var(--navy); margin-bottom:0.5rem;">Description</label>
+                <textarea id="desc"
+                style="width:100%; border:2px solid #e2e8f0; padding:0.7rem 1rem; border-radius:8px; font-size:0.95rem; outline:none; box-sizing:border-box; resize:vertical; min-height:100px; transition: border-color 0.2s; font-family:'DM Sans',sans-serif;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem;">
+                <div>
+                    <label style="display:block; font-weight:600; font-size:0.85rem; color:var(--navy); margin-bottom:0.5rem;">Price (₹)</label>
+                    <input id="price" type="number"
+                    style="width:100%; border:2px solid #e2e8f0; padding:0.7rem 1rem; border-radius:8px; font-size:0.95rem; outline:none; box-sizing:border-box; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='#e2e8f0'">
+                </div>
+                <div>
+                    <label style="display:block; font-weight:600; font-size:0.85rem; color:var(--navy); margin-bottom:0.5rem;">Quantity</label>
+                    <input id="qty" type="number"
+                    style="width:100%; border:2px solid #e2e8f0; padding:0.7rem 1rem; border-radius:8px; font-size:0.95rem; outline:none; box-sizing:border-box; transition: border-color 0.2s;"
+                    onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='#e2e8f0'">
+                </div>
+            </div>
+
+            <div style="margin-bottom:1.75rem;">
+                <label style="display:block; font-weight:600; font-size:0.85rem; color:var(--navy); margin-bottom:0.5rem;">Image URL <span style="color:#94a3b8; font-weight:400;">(optional)</span></label>
+                <input id="image_url" type="text" placeholder="https://example.com/image.jpg"
+                style="width:100%; border:2px solid #e2e8f0; padding:0.7rem 1rem; border-radius:8px; font-size:0.95rem; outline:none; box-sizing:border-box; transition: border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='#e2e8f0'">
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <button onclick="window.location='/products-ui'"
+                style="background:white; color:var(--navy); padding:0.85rem; border:2px solid #e2e8f0; border-radius:8px; font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; cursor:pointer;">
+                ← Cancel
+                </button>
+                <button onclick="updateProduct()"
+                style="background:var(--blue); color:white; padding:0.85rem; border:none; border-radius:8px; font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; cursor:pointer; transition: opacity 0.2s;"
+                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                Update →
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/auth_guard.js"></script>
+<script>requireAuth();</script>
+<script src="/static/js/edit_product.js"></script>
+
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div style="min-height: 80vh; display:flex; align-items:center; justify-content:center; padding: 2rem;">
+
+    <div style="width:100%; max-width:420px;">
+
+        <div style="text-align:center; margin-bottom:2rem;">
+            <div style="font-size:2.5rem; margin-bottom:0.5rem;">🚀</div>
+            <h1 style="font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:var(--navy);">Create Account</h1>
+            <p style="color:#64748b; font-size:0.9rem;">Join TechZone today</p>
+        </div>
+
+        <div class="card" style="padding:2rem;">
+
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; font-weight:600; font-size:0.85rem; color:var(--navy); margin-bottom:0.5rem;">Full Name</label>
+                <input id="name" type="text" placeholder="Aman Gill"
+                style="width:100%; border:2px solid #e2e8f0; padding:0.7rem 1rem; border-radius:8px; font-size:0.95rem; outline:none; box-sizing:border-box; transition: border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='#e2e8f0'">
+            </div>
+
+            <div style="margin-bottom:1.25rem;">
+                <label style="display:block; font-weight:600; font-size:0.85rem; color:var(--navy); margin-bottom:0.5rem;">Email Address</label>
+                <input id="email" type="email" placeholder="you@example.com"
+                style="width:100%; border:2px solid #e2e8f0; padding:0.7rem 1rem; border-radius:8px; font-size:0.95rem; outline:none; box-sizing:border-box; transition: border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='#e2e8f0'">
+            </div>
+
+            <div style="margin-bottom:1.75rem;">
+                <label style="display:block; font-weight:600; font-size:0.85rem; color:var(--navy); margin-bottom:0.5rem;">Password</label>
+                <input id="password" type="password" placeholder="Min 6 characters"
+                style="width:100%; border:2px solid #e2e8f0; padding:0.7rem 1rem; border-radius:8px; font-size:0.95rem; outline:none; box-sizing:border-box; transition: border-color 0.2s;"
+                onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='#e2e8f0'">
+            </div>
+
+            <button onclick="register()"
+            style="width:100%; background:var(--orange); color:white; padding:0.85rem; border:none; border-radius:8px; font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; cursor:pointer; transition: opacity 0.2s;"
+            onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+            Create Account →
+            </button>
+
+            <p style="text-align:center; margin-top:1.25rem; font-size:0.9rem; color:#64748b;">
+                Already have an account?
+                <a href="/login-ui" style="color:var(--blue); font-weight:700; text-decoration:none;">Login</a>
+            </p>
+
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/register.js"></script>
+
+{% endblock %}

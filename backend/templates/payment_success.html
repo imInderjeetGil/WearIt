@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div style="min-height:80vh; display:flex; align-items:center; justify-content:center; padding:2rem;">
+
+    <div style="text-align:center; max-width:480px;">
+
+        <div style="width:100px; height:100px; background:linear-gradient(135deg, #16a34a, #22c55e); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem; font-size:2.5rem;">
+            ✓
+        </div>
+
+        <h1 style="font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:var(--navy); margin-bottom:0.75rem;">
+            Payment Successful!
+        </h1>
+
+        <p style="color:#64748b; font-size:1rem; line-height:1.7; margin-bottom:2rem;">
+            Your order has been placed successfully.<br>
+            Thank you for shopping at <strong>TechZone</strong>!
+        </p>
+
+        <div class="card" style="padding:1.5rem; margin-bottom:2rem; text-align:left;">
+            <div style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0;">
+                <span style="font-size:1.25rem;">📦</span>
+                <span style="color:#64748b; font-size:0.9rem;">Your order is being processed</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0;">
+                <span style="font-size:1.25rem;">🚚</span>
+                <span style="color:#64748b; font-size:0.9rem;">Delivery within 2-3 business days</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.75rem; padding:0.5rem 0;">
+                <span style="font-size:1.25rem;">📧</span>
+                <span style="color:#64748b; font-size:0.9rem;">Confirmation sent to your email</span>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:1rem; justify-content:center;">
+            <a href="/orders-ui"
+            style="background:var(--navy); color:white; padding:0.8rem 1.5rem; border-radius:8px; font-family:'Syne',sans-serif; font-weight:700; text-decoration:none; font-size:0.95rem;">
+            View Orders
+            </a>
+            <a href="/products-ui"
+            style="background:var(--orange); color:white; padding:0.8rem 1.5rem; border-radius:8px; font-family:'Syne',sans-serif; font-weight:700; text-decoration:none; font-size:0.95rem;">
+            Shop More →
+            </a>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

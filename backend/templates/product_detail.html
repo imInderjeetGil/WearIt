@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="page-container">
+
+    <!-- Back button -->
+    <a href="/products-ui" style="display:inline-flex; align-items:center; gap:0.5rem; color:#64748b; text-decoration:none; font-weight:600; font-size:0.9rem; margin-bottom:2rem;">
+        ← Back to Products
+    </a>
+
+    <div id="product-detail"></div>
+
+</div>
+
+<script src="/static/js/auth_guard.js"></script>
+<script src="/static/js/product_detail.js"></script>
+
+{% endblock %}
