@@ -35,13 +35,15 @@ services:
   frontend:
     build: ./wearit-frontend
     container_name: wearit_frontend
-    restart: always
+    ports:
+      - "80:80"
+      - "443:443" # <-- HTTPS traffic ke liye port 443 kholo
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      # Server par jo abhi certificate bana hai, use container ke andar read-only map kar rahe hain
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
-    ports:
-      - "80:80" # Bahar ka port 80 seedhe Nginx container se link ho gaya
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro # Hamari custom nginx configuration inject ho gayi
 
 volumes:
   postgres_data:
