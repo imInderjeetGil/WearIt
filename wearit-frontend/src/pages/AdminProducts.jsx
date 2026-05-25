@@ -8,17 +8,17 @@ function AdminProducts() {
   const [showForm, setShowForm] = useState(false)
   const [editProduct, setEditProduct] = useState(null)
   const [form, setForm] = useState({ name: '', description: '', price: '', quantity: '', image_url: '' })
+  const [imageFile, setImageFile] = useState(null)
+  const [uploading, setUploading] = useState(false)
   const navigate = useNavigate()
   const token = localStorage.getItem("token")
 
   useEffect(() => {
-    // Admin check
     if (!token) { navigate("/login"); return }
     try {
       const payload = JSON.parse(atob(token.split('.')[1]))
       if (payload.role !== "admin") { navigate("/"); return }
     } catch (e) { navigate("/login"); return }
-
     fetchProducts()
   }, [])
 
@@ -32,22 +32,36 @@ function AdminProducts() {
     setLoading(false)
   }
 
-  async function handleSubmit() {
-    const url = editProduct
-      ? `${API_BASE}/products/${editProduct.id}`
-      : `${API_BASE}/products/`
-    const method = editProduct ? "PUT" : "POST"
+  async function uploadImage() {
+    if (!imageFile) return form.image_url
+    setUploading(true)
+    const formData = new FormData()
+    formData.append("file", imageFile)
+    const res = await fetch(`${API_BASE}/products/upload-image`, {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + token },
+      body: formData
+    })
+    const data = await res.json()
+    setUploading(false)
+    return data.image_url
+  }
 
+  async function handleSubmit() {
+    const image_url = await uploadImage()
+    const url = editProduct ? `${API_BASE}/products/${editProduct.id}` : `${API_BASE}/products/`
+    const method = editProduct ? "PUT" : "POST"
     try {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-        body: JSON.stringify({ ...form, price: parseFloat(form.price), quantity: parseInt(form.quantity) })
+        body: JSON.stringify({ ...form, image_url, price: parseFloat(form.price), quantity: parseInt(form.quantity) })
       })
       if (res.ok) {
         setShowForm(false)
         setEditProduct(null)
         setForm({ name: '', description: '', price: '', quantity: '', image_url: '' })
+        setImageFile(null)
         fetchProducts()
       } else {
         const data = await res.json()
@@ -70,19 +84,20 @@ function AdminProducts() {
   function openEdit(product) {
     setEditProduct(product)
     setForm({ name: product.name, description: product.description, price: product.price, quantity: product.quantity, image_url: product.image_url || '' })
+    setImageFile(null)
     setShowForm(true)
   }
 
   function openAdd() {
     setEditProduct(null)
     setForm({ name: '', description: '', price: '', quantity: '', image_url: '' })
+    setImageFile(null)
     setShowForm(true)
   }
 
   return (
     <div style={{ background: '#f5f5f6', minHeight: '100vh', padding: '32px 80px' }}>
 
-      {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a2e' }}>
           MANAGE PRODUCTS <span style={{ color: '#a8a8b3', fontSize: '14px', fontWeight: '400' }}>({products.length} items)</span>
@@ -93,11 +108,11 @@ function AdminProducts() {
         </button>
       </div>
 
-      {/* Add/Edit Form Modal */}
+      {/* Modal */}
       {showForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ background: 'white', borderRadius: '8px', padding: '32px', width: '100%', maxWidth: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
-            
+          <div style={{ background: 'white', borderRadius: '8px', padding: '32px', width: '100%', maxWidth: '480px', boxShadow: '0 8px 32px rgba(0,0,0,0.15)', maxHeight: '90vh', overflowY: 'auto' }}>
+
             <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#1a1a2e', marginBottom: '24px' }}>
               {editProduct ? 'EDIT PRODUCT' : 'ADD NEW PRODUCT'}
             </h2>
@@ -107,7 +122,6 @@ function AdminProducts() {
               { label: 'Description', key: 'description', type: 'text', placeholder: 'Product description...' },
               { label: 'Price (₹)', key: 'price', type: 'number', placeholder: 'e.g. 599' },
               { label: 'Quantity', key: 'quantity', type: 'number', placeholder: 'e.g. 50' },
-              { label: 'Image URL (optional)', key: 'image_url', type: 'text', placeholder: 'https://...' },
             ].map((field) => (
               <div key={field.key} style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#1a1a2e', marginBottom: '6px', letterSpacing: '0.5px' }}>
@@ -123,14 +137,35 @@ function AdminProducts() {
               </div>
             ))}
 
+            {/* Image Upload */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#1a1a2e', marginBottom: '6px', letterSpacing: '0.5px' }}>
+                PRODUCT IMAGE
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => setImageFile(e.target.files[0])}
+                style={{ width: '100%', border: '2px solid #ebebeb', padding: '10px 14px', borderRadius: '4px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }}
+              />
+              {imageFile && (
+                <img src={URL.createObjectURL(imageFile)} alt="preview"
+                  style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '4px', marginTop: '8px' }} />
+              )}
+              {form.image_url && !imageFile && (
+                <img src={form.image_url} alt="current"
+                  style={{ width: '100%', height: '160px', objectFit: 'cover', borderRadius: '4px', marginTop: '8px' }} />
+              )}
+            </div>
+
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
               <button onClick={() => setShowForm(false)}
                 style={{ flex: 1, padding: '12px', background: 'white', border: '2px solid #ebebeb', borderRadius: '4px', fontWeight: '800', fontSize: '14px', cursor: 'pointer' }}>
                 CANCEL
               </button>
-              <button onClick={handleSubmit}
-                style={{ flex: 1, padding: '12px', background: '#f43f5e', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '800', fontSize: '14px', cursor: 'pointer' }}>
-                {editProduct ? 'UPDATE →' : 'ADD →'}
+              <button onClick={handleSubmit} disabled={uploading}
+                style={{ flex: 1, padding: '12px', background: '#f43f5e', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '800', fontSize: '14px', cursor: 'pointer', opacity: uploading ? 0.7 : 1 }}>
+                {uploading ? 'UPLOADING...' : editProduct ? 'UPDATE →' : 'ADD →'}
               </button>
             </div>
 
@@ -138,7 +173,7 @@ function AdminProducts() {
         </div>
       )}
 
-      {/* Products Table */}
+      {/* Table */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '80px', color: '#a8a8b3', fontWeight: '700' }}>Loading...</div>
       ) : (
@@ -189,7 +224,6 @@ function AdminProducts() {
           </table>
         </div>
       )}
-
     </div>
   )
 }

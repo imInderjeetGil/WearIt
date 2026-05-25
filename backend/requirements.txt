@@ -10,3 +10,5 @@ jinja2
 slowapi
 razorpay
 alembic
+boto3
+python-multipart

@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
 from schemas.product import ProductCreate, ProductResponse
 from services import product_service
 from core.dependencies import get_admin_user
 from models.user import User
+from services.s3_service import upload_image
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
@@ -57,3 +58,12 @@ def delete_product(product_id: int, db: Session = Depends(get_db),current_user: 
     if not deleted:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"message": "Deleted successfully"}
+
+@router.post("/upload-image")
+async def upload_product_image(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_admin_user)
+):
+    file_bytes = await file.read()
+    url = upload_image(file_bytes, file.filename, file.content_type)
+    return {"image_url": url}

@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import API_BASE from '../config'
+import TryOnModal from '../components/TryOnModal'
 
 function ProductDetail() {
   const { id } = useParams()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedSize, setSelectedSize] = useState("")
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const sizes = ["S", "M", "L", "XL", "XXL"]
 
@@ -125,6 +127,19 @@ function ProductDetail() {
               style={{ flex: 1, padding: '14px', background: '#f43f5e', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '800', fontSize: '15px', cursor: product.quantity > 0 ? 'pointer' : 'not-allowed', letterSpacing: '0.5px', opacity: product.quantity === 0 ? 0.5 : 1 }}>
               ADD TO CART
             </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              style={{ background: '#1a1a2e', color: 'white', padding: '14px 28px', border: 'none', borderRadius: '4px', fontWeight: '800', cursor: 'pointer', marginLeft: '10px' }}
+            >
+              ✨ VIRTUAL TRY ON
+            </button>
+
+            <TryOnModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              productId={product.id}
+              productName={product.name}
+            />
             <button disabled={product.quantity === 0}
               style={{ flex: 1, padding: '14px', background: '#1a1a2e', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '800', fontSize: '15px', cursor: product.quantity > 0 ? 'pointer' : 'not-allowed', letterSpacing: '0.5px', opacity: product.quantity === 0 ? 0.5 : 1 }}>
               BUY NOW
