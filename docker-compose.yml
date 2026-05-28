@@ -36,7 +36,7 @@ services:
     build: ./wearit-frontend
     container_name: wearit_frontend
     ports:
-      - "80:80"
+      - "81:80"
       - "443:443" # <-- HTTPS traffic ke liye port 443 kholo
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
