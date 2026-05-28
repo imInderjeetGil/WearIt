@@ -44,6 +44,7 @@ function Home() {
 
   return (
     <div style={{ background: '#f5f5f6', minHeight: '100vh', fontFamily: 'sans-serif' }}>
+      
 
       {/* Hero Banner - Auto Scroll */}
       <div style={{ position: 'relative', overflow: 'hidden', height: '420px' }}>

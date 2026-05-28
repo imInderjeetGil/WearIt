@@ -39,22 +39,22 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=ProductResponse)
-def create_product(product: ProductCreate, db: Session = Depends(get_db), current_user: User = Depends(get_admin_user)):
-    return product_service.create_product(db, product,current_user.id)
+def create_product(product: ProductCreate, db: Session = Depends(get_db), _: User = Depends(get_admin_user)):
+    return product_service.create_product(db, product)
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
-def update_product(product_id: int, product: ProductCreate, db: Session = Depends(get_db),current_user: User = Depends(get_admin_user)):
+def update_product(product_id: int, product: ProductCreate, db: Session = Depends(get_db), _: User = Depends(get_admin_user)):
     
-    updated = product_service.update_product(db, product_id, product,current_user.id)
+    updated = product_service.update_product(db, product_id, product)
     if not updated:
         raise HTTPException(status_code=404, detail="Product not found")
     return updated
 
 
 @router.delete("/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db),current_user: User = Depends(get_admin_user)):
-    deleted = product_service.delete_product(db, product_id,current_user.id)
+def delete_product(product_id: int, db: Session = Depends(get_db), _: User = Depends(get_admin_user)):
+    deleted = product_service.delete_product(db, product_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"message": "Deleted successfully"}
@@ -62,7 +62,7 @@ def delete_product(product_id: int, db: Session = Depends(get_db),current_user: 
 @router.post("/upload-image")
 async def upload_product_image(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_admin_user)
+    _: User = Depends(get_admin_user)
 ):
     file_bytes = await file.read()
     url = upload_image(file_bytes, file.filename, file.content_type)

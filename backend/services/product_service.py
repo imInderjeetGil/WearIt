@@ -45,36 +45,29 @@ def get_products(db: Session, page: int, limit: int,min_price=None, max_price=No
 def get_product(db: Session, product_id:int):
     return db.query(Product).filter(Product.id == product_id).first()
 
-def create_product(db: Session, product: ProductCreate, user_id: int):
-    db_product = Product(**product.model_dump(), owner_id=user_id)
+def create_product(db: Session, product: ProductCreate):
+    db_product = Product(**product.model_dump())
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
     
     return db_product
 
-def update_product(db: Session, product_id:int,product:ProductCreate,user_id: int):
+def update_product(db: Session, product_id:int,product:ProductCreate):
     db_product = get_product(db,product_id)
     if not db_product:
         return None
-    
-    if db_product.owner_id != user_id:
-        raise HTTPException(status_code=403, detail="Not Allowed")
-    
+       
     for key,value in product.model_dump().items():
         setattr(db_product, key, value)
     db.commit()
     db.refresh(db_product)
     return db_product
 
-def delete_product(db: Session, product_id: int, user_id: int):
+def delete_product(db: Session, product_id: int):
     db_product = get_product(db, product_id)
     if not db_product:
         return None
-    
-    if db_product.owner_id != user_id:
-       raise HTTPException(status_code=403, detail="Not Allowed")
-
     db.delete(db_product)
     db.commit()
     return db_product

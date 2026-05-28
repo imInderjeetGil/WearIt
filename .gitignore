@@ -2,6 +2,7 @@
 backend/__pycache__/
 backend/.venv/
 backend/*.db
+backend/templates/
 
 # Node
 frontend/node_modules/
@@ -9,3 +10,6 @@ frontend/dist/
 
 # Env
 .env
+.env.production
+
+

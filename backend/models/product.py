@@ -9,5 +9,4 @@ class Product(Base):
     description = Column(String)
     price = Column(Float)
     quantity = Column(Integer)
-    image_url = Column(String, nullable=True) 
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    image_url = Column(String, nullable=True)

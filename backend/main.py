@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from db.session import engine
 from models import user, product, cart, order, review
 from db.base import Base
-from api import product, auth, cart, order, payment, review, ai_tryon
+from api import product, auth, cart, order, payment, review
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
@@ -35,4 +35,3 @@ app.include_router(cart.router)
 app.include_router(order.router)
 app.include_router(payment.router)
 app.include_router(review.router)
-app.include_router(ai_tryon.router)
