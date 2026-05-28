@@ -3,10 +3,13 @@ backend/__pycache__/
 backend/.venv/
 backend/*.db
 backend/templates/
+backend/.env
 
 # Node
-frontend/node_modules/
-frontend/dist/
+wearit-frontend/node_modules/
+wearit-frontend/dist/
+wearit-frontend/.env
+wearit-frontend/.env.production
 
 # Env
 .env

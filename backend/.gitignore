@@ -34,3 +34,5 @@ htmlcov/
 
 # Migrations cache (if using Alembic later)
 __pycache__/
+
+templates/
