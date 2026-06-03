@@ -42,7 +42,7 @@ function Products() {
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         onKeyUp={e => { if (e.key === 'Enter') { setPage(1); fetchProducts() } }}
-                        style={{ border: '2px solid #ebebeb', padding: '8px 16px', borderRadius: '4px', fontSize: '14px', outline: 'none', width: '220px', background: 'white' }}
+                        style={{ border: '2px solid #ebebeb', padding: '8px 16px', borderRadius: '4px', fontSize: '14px', outline: 'none', background: 'white' }}
                     />
                     <select
                         value={sort}
