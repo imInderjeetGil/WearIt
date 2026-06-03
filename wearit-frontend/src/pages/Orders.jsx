@@ -45,7 +45,7 @@ function Orders() {
   )
 
   return (
-    <div style={{ background: '#f5f5f6', minHeight: '100vh', padding: '32px 80px' }}>
+    <div className="responsive-page" style={{ background: '#f5f5f6', minHeight: '100vh' }}>
       <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a2e', marginBottom: '24px' }}>YOUR ORDERS</h1>
 
       {orders.length === 0 ? (
@@ -60,7 +60,7 @@ function Orders() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {orders.map((order) => (
             <div key={order.id} style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div className="order-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', gap: '8px' }}>
                 <div>
                   <div style={{ fontSize: '13px', color: '#a8a8b3', marginBottom: '4px' }}>Order #{order.id} · {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
                   <div style={{ fontSize: '18px', fontWeight: '800', color: '#1a1a2e' }}>₹{order.total_amount}</div>

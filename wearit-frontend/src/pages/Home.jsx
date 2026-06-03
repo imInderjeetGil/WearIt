@@ -47,16 +47,15 @@ function Home() {
       
 
       {/* Hero Banner - Auto Scroll */}
-      <div style={{ position: 'relative', overflow: 'hidden', height: '420px' }}>
+      <div className="hero-banner" style={{ position: 'relative', overflow: 'hidden' }}>
         {banners.map((banner, i) => (
-          <div key={i} style={{
+          <div key={i} className="hero-slide" style={{
             position: 'absolute', inset: 0,
             // Linear Gradient overlay banaya taaki white text image ke upar dundhla na ho
             backgroundImage: `linear-gradient(90deg, rgba(26, 26, 46, 0.9) 40%, rgba(26, 26, 46, 0.4) 100%), ${banner.bgImage}`,
             backgroundPosition: 'center',
             backgroundSize: 'cover',
             backgroundRepeat: 'no-repeat',
-            padding: '60px 80px',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             opacity: current === i ? 1 : 0,
             transform: current === i ? 'scale(1)' : 'scale(1.05)', // Sweet zooming effect transition
@@ -68,11 +67,11 @@ function Home() {
               <div style={{ background: '#f43f5e', display: 'inline-block', color: 'white', fontSize: '11px', fontWeight: '800', letterSpacing: '2px', padding: '5px 14px', borderRadius: '4px', marginBottom: '20px' }}>
                 {banner.tag}
               </div>
-              <h1 style={{ fontSize: '56px', fontWeight: '900', color: 'white', lineHeight: '1.1', marginBottom: '12px', textShadow: '1px 1px 10px rgba(0,0,0,0.5)' }}>
+              <h1 className="hero-title" style={{ fontWeight: '900', color: 'white', lineHeight: '1.1', marginBottom: '12px', textShadow: '1px 1px 10px rgba(0,0,0,0.5)' }}>
                 {banner.title}
               </h1>
-              <p style={{ color: '#e2e2e9', fontSize: '18px', marginBottom: '32px', textShadow: '1px 1px 5px rgba(0,0,0,0.5)' }}>{banner.sub}</p>
-              <a href="/products" style={{ background: 'white', color: '#1a1a2e', padding: '14px 36px', borderRadius: '4px', fontWeight: '800', fontSize: '15px', textDecoration: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', transition: '0.2s' }}>
+              <p className="hero-subtitle" style={{ color: '#e2e2e9', marginBottom: '32px', textShadow: '1px 1px 5px rgba(0,0,0,0.5)' }}>{banner.sub}</p>
+              <a className="hero-cta" href="/products" style={{ background: 'white', color: '#1a1a2e', borderRadius: '4px', fontWeight: '800', textDecoration: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.25)', transition: '0.2s' }}>
                 SHOP NOW
               </a>
             </div>
@@ -89,7 +88,7 @@ function Home() {
       </div>
 
       {/* Category Pills */}
-      <div style={{ background: 'white', padding: '24px 80px', display: 'flex', gap: '16px', overflowX: 'auto', borderBottom: '1px solid #ebebeb' }}>
+      <div className="category-strip" style={{ background: 'white', display: 'flex', gap: '16px', overflowX: 'auto', borderBottom: '1px solid #ebebeb' }}>
         {[
           { label: "Men", emoji: "👔" },
           { label: "Women", emoji: "👗" },
@@ -108,7 +107,7 @@ function Home() {
       </div>
 
       {/* Offers Strip */}
-      <div style={{ background: 'white', margin: '16px 80px', borderRadius: '8px', padding: '20px 32px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+      <div className="offers-strip" style={{ background: 'white', borderRadius: '8px', display: 'grid', gap: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
         {[
           { icon: '🚚', title: 'FREE DELIVERY', desc: 'On orders above ₹499' },
           { icon: '↩️', title: 'EASY RETURNS', desc: '7-day return policy' },
@@ -126,7 +125,7 @@ function Home() {
       </div>
 
       {/* Trending Section */}
-      <div style={{ padding: '32px 80px' }}>
+      <div className="section-pad">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a2e' }}>TRENDING NOW</h2>
           <a href="/products" style={{ fontSize: '13px', fontWeight: '700', color: '#f43f5e', textDecoration: 'none' }}>VIEW ALL →</a>
