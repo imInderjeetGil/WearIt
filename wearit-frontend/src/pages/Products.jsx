@@ -28,15 +28,15 @@ function Products() {
     }
 
     return (
-        <div style={{ background: '#f5f5f6', minHeight: '100vh', padding: '32px 80px' }}>
+        <div className="responsive-page" style={{ background: '#f5f5f6', minHeight: '100vh' }}>
 
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div className="products-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', gap: '12px' }}>
                 <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a2e' }}>
                     ALL PRODUCTS <span style={{ color: '#a8a8b3', fontSize: '14px', fontWeight: '400' }}>({products.length} items)</span>
                 </h1>
 
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="products-controls" style={{ display: 'flex', gap: '12px' }}>
                     <input
                         placeholder="Search clothes..."
                         value={search}
@@ -70,7 +70,7 @@ function Products() {
             ) : (
                 <>
                     {/* Product Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                    <div className="products-grid" style={{ display: 'grid', gap: '16px' }}>
                         {products.map((p) => (
                             <div key={p.id}
                                 onClick={() => window.location.href = `/product/${p.id}`}

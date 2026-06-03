@@ -77,7 +77,7 @@ function Cart() {
   )
 
   return (
-    <div style={{ background: '#f5f5f6', minHeight: '100vh', padding: '32px 80px' }}>
+    <div className="responsive-page" style={{ background: '#f5f5f6', minHeight: '100vh' }}>
       <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a2e', marginBottom: '24px' }}>YOUR CART</h1>
 
       {cartItems.length === 0 ? (
@@ -89,12 +89,12 @@ function Cart() {
           </a>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px' }}>
+        <div className="cart-layout" style={{ display: 'grid', gap: '24px' }}>
 
           {/* Cart Items */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {cartItems.map((item) => (
-              <div key={item.id} style={{ background: 'white', borderRadius: '8px', padding: '20px', display: 'flex', gap: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <div key={item.id} className="cart-item-card" style={{ background: 'white', borderRadius: '8px', padding: '20px', display: 'flex', gap: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
                 <div style={{ width: '90px', height: '90px', background: '#fff0f3', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
                   {item.product?.image_url
                     ? <img src={item.product.image_url} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

@@ -96,9 +96,9 @@ function AdminProducts() {
   }
 
   return (
-    <div style={{ background: '#f5f5f6', minHeight: '100vh', padding: '32px 80px' }}>
+    <div className="responsive-page" style={{ background: '#f5f5f6', minHeight: '100vh' }}>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div className="admin-products-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', gap: '12px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a2e' }}>
           MANAGE PRODUCTS <span style={{ color: '#a8a8b3', fontSize: '14px', fontWeight: '400' }}>({products.length} items)</span>
         </h1>
@@ -177,7 +177,7 @@ function AdminProducts() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '80px', color: '#a8a8b3', fontWeight: '700' }}>Loading...</div>
       ) : (
-        <div style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+        <div className="admin-table-wrap" style={{ background: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f5f5f6', borderBottom: '2px solid #ebebeb' }}>

@@ -65,13 +65,13 @@ function ProductDetail() {
   )
 
   return (
-    <div style={{ background: '#f5f5f6', minHeight: '100vh', padding: '32px 80px' }}>
+    <div className="responsive-page" style={{ background: '#f5f5f6', minHeight: '100vh' }}>
 
       <a href="/products" style={{ fontSize: '13px', fontWeight: '700', color: '#f43f5e', textDecoration: 'none' }}>
         ← Back to Products
       </a>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', marginTop: '24px', background: 'white', borderRadius: '8px', padding: '40px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+      <div className="product-detail-grid" style={{ display: 'grid', marginTop: '24px', background: 'white', borderRadius: '8px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
 
         <div style={{ background: '#fff0f3', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px', overflow: 'hidden' }}>
           {product.image_url ? (
@@ -105,7 +105,7 @@ function ProductDetail() {
             <div style={{ fontSize: '13px', fontWeight: '800', color: '#1a1a2e', marginBottom: '12px' }}>
               SELECT SIZE {selectedSize && <span style={{ color: '#f43f5e' }}>— {selectedSize}</span>}
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               {sizes.map((size) => (
                 <button key={size}
                   onClick={() => setSelectedSize(size)}
@@ -122,14 +122,14 @@ function ProductDetail() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div className="product-actions" style={{ display: 'flex', gap: '16px', width: '100%' }}>
             <button onClick={addToCart} disabled={product.quantity === 0}
               style={{ flex: 1, padding: '14px', background: '#f43f5e', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '800', fontSize: '15px', cursor: product.quantity > 0 ? 'pointer' : 'not-allowed', letterSpacing: '0.5px', opacity: product.quantity === 0 ? 0.5 : 1 }}>
               ADD TO CART
             </button>
             <button
               onClick={() => setIsModalOpen(true)}
-              style={{ background: '#1a1a2e', color: 'white', padding: '14px 28px', border: 'none', borderRadius: '4px', fontWeight: '800', cursor: 'pointer', marginLeft: '10px' }}
+              style={{ background: '#1a1a2e', color: 'white', padding: '14px 28px', border: 'none', borderRadius: '4px', fontWeight: '800', cursor: 'pointer', width: '100%' }}
             >
               ✨ VIRTUAL TRY ON
             </button>
