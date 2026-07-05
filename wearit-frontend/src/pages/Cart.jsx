@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import API_BASE from '../config'
 
 function Cart() {
@@ -7,11 +7,6 @@ function Cart() {
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
   const token = localStorage.getItem("token")
-
-  useEffect(() => {
-    if (!token) { navigate("/login"); return }
-    fetchCart()
-  }, [])
 
   async function fetchCart() {
     setLoading(true)
@@ -24,8 +19,13 @@ function Cart() {
     } catch (e) {
       console.error("Cart fetch failed", e)
     }
-    setLoading(false)
+      setLoading(false)
   }
+
+  useEffect(() => {
+    if (!token) { navigate("/login"); return }
+    fetchCart()
+  }, [])
 
   async function removeItem(cartId) {
     try {
@@ -61,7 +61,7 @@ function Cart() {
           })
           window.location.href = "/payment-success"
         },
-        theme: { color: "#f43f5e" }
+        theme: { color: "#e11d48" }
       }
       const rzp = new window.Razorpay(options)
       rzp.open()
@@ -73,67 +73,80 @@ function Cart() {
   const total = cartItems.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0)
 
   if (loading) return (
-    <div style={{ textAlign: 'center', padding: '80px', fontSize: '18px', color: '#a8a8b3', fontWeight: '700' }}>Loading...</div>
+    <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+    </div>
   )
 
   return (
-    <div style={{ background: '#f5f5f6', minHeight: '100vh', padding: '32px 80px' }}>
-      <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a2e', marginBottom: '24px' }}>YOUR CART</h1>
+    <div className="min-h-screen bg-zinc-50">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-6 md:py-10">
+        <h1 className="text-xl md:text-2xl font-extrabold text-dark tracking-tight mb-6">Your Cart</h1>
 
-      {cartItems.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px', background: 'white', borderRadius: '8px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🛒</div>
-          <p style={{ fontSize: '18px', fontWeight: '700', color: '#a8a8b3', marginBottom: '16px' }}>Your cart is empty</p>
-          <a href="/products" style={{ background: '#f43f5e', color: 'white', padding: '12px 32px', borderRadius: '4px', fontWeight: '800', textDecoration: 'none', fontSize: '14px' }}>
-            SHOP NOW →
-          </a>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px' }}>
+        {cartItems.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl border border-border">
+            <div className="text-5xl mb-4">&#x1F6D2;</div>
+            <p className="text-lg font-bold text-zinc-400 mb-5">Your cart is empty</p>
+            <Link to="/products" className="inline-block bg-brand text-white text-sm font-bold px-8 py-3 rounded-xl no-underline hover:bg-brand-dark transition-colors">
+              Shop Now &rarr;
+            </Link>
+          </div>
+        ) : (
+          <div className="grid lg:grid-cols-[1fr_380px] gap-6">
+            {/* Cart Items */}
+            <div className="space-y-3">
+              {cartItems.map((item) => (
+                <div key={item.id} className="bg-white rounded-xl border border-border p-4 flex gap-4">
+                  <div className="w-20 h-20 md:w-24 md:h-24 bg-zinc-50 rounded-lg overflow-hidden flex-shrink-0">
+                    {item.product?.image_url
+                      ? <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-2xl">&#x1F455;</div>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm md:text-base font-semibold text-dark truncate">{item.product?.name}</h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">Qty: {item.quantity}</p>
+                    <p className="text-base font-bold text-dark mt-1.5">₹{item.product?.price}</p>
+                  </div>
+                  <button onClick={() => removeItem(item.id)}
+                    className="text-xs font-bold text-brand bg-transparent border-none cursor-pointer hover:underline self-start flex-shrink-0">
+                    REMOVE
+                  </button>
+                </div>
+              ))}
+            </div>
 
-          {/* Cart Items */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {cartItems.map((item) => (
-              <div key={item.id} style={{ background: 'white', borderRadius: '8px', padding: '20px', display: 'flex', gap: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-                <div style={{ width: '90px', height: '90px', background: '#fff0f3', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                  {item.product?.image_url
-                    ? <img src={item.product.image_url} alt={item.product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ fontSize: '36px' }}>👕</span>}
+            {/* Summary */}
+            <div className="bg-white rounded-xl border border-border p-6 h-fit lg:sticky lg:top-24">
+              <h2 className="text-sm font-bold text-dark uppercase tracking-wider mb-5">Order Summary</h2>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between text-zinc-500">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-dark">₹{total}</span>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '15px', fontWeight: '700', color: '#1a1a2e', marginBottom: '4px' }}>{item.product?.name}</div>
-                  <div style={{ fontSize: '13px', color: '#a8a8b3', marginBottom: '8px' }}>Qty: {item.quantity}</div>
-                  <div style={{ fontSize: '16px', fontWeight: '800', color: '#1a1a2e' }}>₹{item.product?.price}</div>
+                <div className="flex justify-between text-emerald-600 font-semibold">
+                  <span>Delivery</span>
+                  <span>FREE</span>
                 </div>
-                <button onClick={() => removeItem(item.id)}
-                  style={{ background: 'none', border: 'none', color: '#f43f5e', fontWeight: '800', cursor: 'pointer', fontSize: '13px', alignSelf: 'flex-start' }}>
-                  REMOVE
-                </button>
               </div>
-            ))}
-          </div>
+              <div className="border-t border-border mt-4 pt-4 flex justify-between mb-6">
+                <span className="text-base font-bold text-dark">Total</span>
+                <span className="text-xl font-black text-dark">₹{total}</span>
+              </div>
+              <button onClick={checkout}
+                className="w-full bg-brand text-white text-sm font-bold py-3.5 rounded-xl hover:bg-brand-dark transition-colors cursor-pointer border-none tracking-wide">
+                Proceed to Checkout &rarr;
+              </button>
 
-          {/* Summary */}
-          <div style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', height: 'fit-content' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: '800', color: '#1a1a2e', marginBottom: '20px' }}>ORDER SUMMARY</h2>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px', color: '#7e7e7e' }}>
-              <span>Subtotal</span><span>₹{total}</span>
+              <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-zinc-400">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>
+                </svg>
+                Secure checkout with Razorpay
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', fontSize: '14px', color: '#2ecc71', fontWeight: '700' }}>
-              <span>Delivery</span><span>FREE</span>
-            </div>
-            <div style={{ borderTop: '1px solid #ebebeb', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-              <span style={{ fontSize: '16px', fontWeight: '800', color: '#1a1a2e' }}>Total</span>
-              <span style={{ fontSize: '20px', fontWeight: '900', color: '#1a1a2e' }}>₹{total}</span>
-            </div>
-            <button onClick={checkout}
-              style={{ width: '100%', background: '#f43f5e', color: 'white', padding: '14px', border: 'none', borderRadius: '4px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', letterSpacing: '0.5px' }}>
-              PROCEED TO CHECKOUT →
-            </button>
           </div>
-
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

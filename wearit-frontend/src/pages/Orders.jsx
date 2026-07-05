@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import API_BASE from '../config'
 
 function Orders() {
@@ -9,16 +9,11 @@ function Orders() {
   const token = localStorage.getItem("token")
 
   const statusStyle = {
-  pending:   { bg: '#fef3c7', color: '#d97706' },
-  paid:      { bg: '#dcfce7', color: '#16a34a' },
-  failed:    { bg: '#fee2e2', color: '#dc2626' },
-  delivered: { bg: '#e0f2fe', color: '#0284c7' },
-}
-
-  useEffect(() => {
-    if (!token) { navigate("/login"); return }
-    fetchOrders()
-  }, [])
+    pending: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+    paid: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+    failed: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
+    delivered: { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200' },
+  }
 
   async function fetchOrders() {
     setLoading(true)
@@ -34,55 +29,62 @@ function Orders() {
     setLoading(false)
   }
 
-  const statusColor = {
-    pending: { bg: '#fef3c7', color: '#d97706' },
-    paid: { bg: '#dcfce7', color: '#16a34a' },
-    cancelled: { bg: '#fee2e2', color: '#dc2626' },
-  }
+  useEffect(() => {
+    if (!token) { navigate("/login"); return }
+    fetchOrders()
+  }, [])
 
   if (loading) return (
-    <div style={{ textAlign: 'center', padding: '80px', fontSize: '18px', color: '#a8a8b3', fontWeight: '700' }}>Loading...</div>
+    <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
+    </div>
   )
 
   return (
-    <div style={{ background: '#f5f5f6', minHeight: '100vh', padding: '32px 80px' }}>
-      <h1 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a2e', marginBottom: '24px' }}>YOUR ORDERS</h1>
+    <div className="min-h-screen bg-zinc-50">
+      <div className="max-w-5xl mx-auto px-4 md:px-8 lg:px-12 py-6 md:py-10">
+        <h1 className="text-xl md:text-2xl font-extrabold text-dark tracking-tight mb-6">Your Orders</h1>
 
-      {orders.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '80px', background: 'white', borderRadius: '8px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📋</div>
-          <p style={{ fontSize: '18px', fontWeight: '700', color: '#a8a8b3', marginBottom: '16px' }}>No orders yet</p>
-          <a href="/products" style={{ background: '#f43f5e', color: 'white', padding: '12px 32px', borderRadius: '4px', fontWeight: '800', textDecoration: 'none', fontSize: '14px' }}>
-            SHOP NOW →
-          </a>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {orders.map((order) => (
-            <div key={order.id} style={{ background: 'white', borderRadius: '8px', padding: '24px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div>
-                  <div style={{ fontSize: '13px', color: '#a8a8b3', marginBottom: '4px' }}>Order #{order.id} · {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                  <div style={{ fontSize: '18px', fontWeight: '800', color: '#1a1a2e' }}>₹{order.total_amount}</div>
+        {orders.length === 0 ? (
+          <div className="text-center py-16 bg-white rounded-2xl border border-border">
+            <div className="text-5xl mb-4">&#x1F4CB;</div>
+            <p className="text-lg font-bold text-zinc-400 mb-5">No orders yet</p>
+            <Link to="/products" className="inline-block bg-brand text-white text-sm font-bold px-8 py-3 rounded-xl no-underline hover:bg-brand-dark transition-colors">
+              Shop Now &rarr;
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {orders.map((order) => {
+              const s = statusStyle[order.status] || { bg: 'bg-zinc-50', text: 'text-zinc-700', border: 'border-zinc-200' }
+              return (
+                <div key={order.id} className="bg-white rounded-xl border border-border p-5 md:p-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                      <p className="text-xs text-zinc-400 mb-1">
+                        Order #{order.id} &middot; {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                      <p className="text-xl font-extrabold text-dark">₹{order.total_amount}</p>
+                    </div>
+                    <span className={`self-start text-[11px] font-bold px-3 py-1.5 rounded-full border ${s.bg} ${s.text} ${s.border}`}>
+                      {order.status?.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="border-t border-border pt-4 space-y-2">
+                    {order.items.map(item => (
+                      <Link key={item.id} to={`/product/${item.product_id}`}
+                        className="block text-sm text-brand font-semibold no-underline hover:underline">
+                        Product #{item.product_id} &times; {item.quantity} &mdash; ₹{item.price}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-                <span style={{ background: statusStyle[order.status]?.bg || '#f5f5f6', color: statusStyle[order.status]?.color || '#1a1a2e', padding: '6px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: '800' }}>
-                  {order.status?.toUpperCase()}
-                </span>
-              </div>
-
-              {/* Items */}
-              <div style={{ borderTop: '1px solid #f5f5f6', paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {order.items.map(item => (
-                  <a key={item.id} href={`/product/${item.product_id}`}
-                    style={{ fontSize: '13px', color: '#f43f5e', fontWeight: '700', textDecoration: 'none' }}>
-                    Product #{item.product_id} × {item.quantity} — ₹{item.price}
-                  </a>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

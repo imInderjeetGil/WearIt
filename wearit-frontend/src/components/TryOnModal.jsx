@@ -1,103 +1,110 @@
-import React, { useState } from 'react';
-import API_BASE from '../config';
+import { useState } from 'react'
+import API_BASE from '../config'
 
 function TryOnModal({ isOpen, onClose, productId, productName }) {
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [resultImage, setResultImage] = useState(null);
+  const [file, setFile] = useState(null)
+  const [preview, setPreview] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [resultImage, setResultImage] = useState(null)
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
+    const selectedFile = e.target.files[0]
     if (selectedFile) {
-      setFile(selectedFile);
-      setPreview(URL.createObjectURL(selectedFile));
-      setResultImage(null); // Purana result clear karo
+      setFile(selectedFile)
+      setPreview(URL.createObjectURL(selectedFile))
+      setResultImage(null)
     }
-  };
+  }
 
   const handleUpload = async () => {
-    if (!file) return alert("Pehle apni ek photo select karo bhai!");
-    
-    setLoading(true);
-    const formData = new FormData();
-    formData.append("user_image", file);
+    if (!file) return alert("Please select your photo first!")
+    setLoading(true)
+    const formData = new FormData()
+    formData.append("user_image", file)
 
     try {
       const response = await fetch(`${API_BASE}/ai/tryon?product_id=${productId}`, {
         method: "POST",
-        body: formData, // FormData ke sath content-type header nahi dete, browser khud set karta hai
-      });
-      
-      const data = await response.json();
+        body: formData,
+      })
+      const data = await response.json()
       if (data.success) {
-        setResultImage(data.processed_image_url);
+        setResultImage(data.processed_image_url)
       } else {
-        alert("Try-On fail ho gaya, dobara check karo.");
+        alert("Try-On failed, please try again.")
       }
     } catch (err) {
-      console.error("Tryon error:", err);
-      alert("Backend se connect nahi ho paya!");
+      console.error("Tryon error:", err)
+      alert("Could not connect to the server!")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const handleReset = () => {
+    setFile(null)
+    setPreview(null)
+    setResultImage(null)
+  }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
-      <div style={{ background: 'white', padding: '30px', borderRadius: '12px', maxWidth: '550px', width: '100%', position: 'relative', textAlign: 'center', fontFamily: 'sans-serif' }}>
-        
-        <button onClick={onClose} style={{ position: 'absolute', right: '15px', top: '15px', background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}>✕</button>
-        
-        <h3 style={{ margin: '0 0 10px 0', color: '#1a1a2e' }}>✨ AI Virtual Try-On</h3>
-        <p style={{ fontSize: '14px', color: '#7e7e7e', marginBottom: '20px' }}>See how <b>{productName}</b> looks on you instantly!</p>
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl p-6 max-w-lg w-full relative text-center shadow-xl">
+        <button onClick={onClose} className="absolute right-4 top-4 text-zinc-400 hover:text-zinc-600 bg-transparent border-none text-xl cursor-pointer">
+          &times;
+        </button>
 
-        {/* Image Containers */}
-        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '20px' }}>
-          {/* User Image Preview */}
-          {preview && (
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>Your Photo</div>
-              <img src={preview} alt="User preview" style={{ width: '140px', height: '180px', objectFit: 'cover', borderRadius: '8px', border: '2px dashed #ebebeb' }} />
-            </div>
-          )}
+        <h3 className="text-lg font-extrabold text-dark mb-1">AI Virtual Try-On</h3>
+        <p className="text-sm text-zinc-500 mb-6">
+          See how <strong className="text-dark">{productName}</strong> looks on you instantly!
+        </p>
 
-          {/* AI Output Image */}
-          {resultImage && (
-            <div>
-              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e', marginBottom: '4px' }}>Magic Try-On 🔥</div>
-              <img src={resultImage} alt="AI Result" style={{ width: '140px', height: '180px', objectFit: 'cover', borderRadius: '8px', border: '2px solid #f43f5e' }} />
-            </div>
-          )}
-        </div>
+        {/* Preview Images */}
+        {(preview || resultImage) && (
+          <div className="flex gap-4 justify-center mb-5">
+            {preview && (
+              <div>
+                <p className="text-[11px] font-bold text-zinc-500 mb-1">Your Photo</p>
+                <img src={preview} alt="You" className="w-32 h-44 object-cover rounded-xl border-2 border-dashed border-border" />
+              </div>
+            )}
+            {resultImage && (
+              <div>
+                <p className="text-[11px] font-bold text-brand mb-1">Try-On Result</p>
+                <img src={resultImage} alt="Result" className="w-32 h-44 object-cover rounded-xl border-2 border-brand" />
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Controls */}
         {!resultImage && (
-          <div style={{ marginBottom: '20px' }}>
-            <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} id="hidden-file-input" />
-            <label htmlFor="hidden-file-input" style={{ background: '#fff0f3', color: '#f43f5e', padding: '10px 20px', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', display: 'inline-block', border: '1px solid #ffe4e6' }}>
-              {preview ? "Change Photo 📸" : "Upload Your Photo 📸"}
+          <div className="mb-4">
+            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" id="tryon-file-input" />
+            <label htmlFor="tryon-file-input" className="inline-block bg-rose-50 text-brand text-sm font-semibold px-5 py-2.5 rounded-xl border border-brand-light cursor-pointer hover:bg-rose-100 transition-colors">
+              {preview ? 'Change Photo' : 'Upload Your Photo'}
             </label>
           </div>
         )}
 
-        {/* Action Button */}
         {preview && !resultImage && (
-          <button onClick={handleUpload} disabled={loading} style={{ width: '100%', background: 'linear-gradient(120deg, #1a1a2e, #f43f5e)', color: 'white', padding: '12px', border: 'none', borderRadius: '6px', fontWeight: '700', fontSize: '15px', cursor: 'pointer' }}>
-            {loading ? "AI is rendering your outfit... 🧠✨" : "Generate Try-On Image 🪄"}
+          <button onClick={handleUpload} disabled={loading}
+            className="w-full bg-gradient-to-r from-dark to-brand text-white text-sm font-bold py-3 rounded-xl transition-all disabled:opacity-60 cursor-pointer border-none">
+            {loading ? 'Processing your image...' : 'Generate Try-On'}
           </button>
         )}
 
         {resultImage && (
-          <button onClick={() => { setFile(null); setPreview(null); setResultImage(null); }} style={{ width: '100%', background: '#1a1a2e', color: 'white', padding: '12px', border: 'none', borderRadius: '6px', fontWeight: '700', cursor: 'pointer' }}>
-            Try Another One 🔄
+          <button onClick={handleReset}
+            className="w-full bg-dark text-white text-sm font-bold py-3 rounded-xl hover:bg-zinc-800 transition-colors cursor-pointer border-none">
+            Try Another
           </button>
         )}
       </div>
     </div>
-  );
+  )
 }
 
-export default TryOnModal;
+export default TryOnModal

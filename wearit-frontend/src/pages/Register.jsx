@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import API_BASE from '../config'
 
 function Register() {
@@ -25,58 +25,55 @@ function Register() {
       } else {
         navigate("/login")
       }
-    } catch (e) {
+    } catch {
       setError("Something went wrong. Try again.")
     }
     setLoading(false)
   }
 
   return (
-    <div style={{ background: '#f5f5f6', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ width: '100%', maxWidth: '420px' }}>
-
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '24px', fontWeight: '900', color: '#1a1a2e' }}>Wear<span style={{ color: '#f43f5e' }}>It</span></div>
-          <p style={{ color: '#a8a8b3', fontSize: '14px', marginTop: '8px' }}>Create your account</p>
+    <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <Link to="/" className="text-2xl font-black text-dark no-underline">Wear<span className="text-brand">It</span></Link>
+          <p className="text-sm text-zinc-500 mt-2">Create your account</p>
         </div>
 
-        <div style={{ background: 'white', borderRadius: '8px', padding: '32px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-
+        <div className="bg-white rounded-2xl border border-border p-6 md:p-8">
           {error && (
-            <div style={{ background: '#fff0f3', border: '1px solid #fecdd3', color: '#f43f5e', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', fontWeight: '600', marginBottom: '20px' }}>
+            <div className="bg-rose-50 border border-rose-200 text-brand text-sm font-semibold px-4 py-3 rounded-lg mb-5">
               {error}
             </div>
           )}
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1a1a2e', marginBottom: '8px', letterSpacing: '0.5px' }}>FULL NAME</label>
+          <div className="mb-4">
+            <label className="block text-[11px] font-bold text-dark uppercase tracking-wider mb-1.5">Full Name</label>
             <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Aman Gill"
-              style={{ width: '100%', border: '2px solid #ebebeb', padding: '10px 14px', borderRadius: '4px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-zinc-400 transition-colors" />
           </div>
 
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1a1a2e', marginBottom: '8px', letterSpacing: '0.5px' }}>EMAIL ADDRESS</label>
+          <div className="mb-4">
+            <label className="block text-[11px] font-bold text-dark uppercase tracking-wider mb-1.5">Email</label>
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"
-              style={{ width: '100%', border: '2px solid #ebebeb', padding: '10px 14px', borderRadius: '4px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-zinc-400 transition-colors" />
           </div>
 
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '800', color: '#1a1a2e', marginBottom: '8px', letterSpacing: '0.5px' }}>PASSWORD</label>
+          <div className="mb-6">
+            <label className="block text-[11px] font-bold text-dark uppercase tracking-wider mb-1.5">Password</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min 6 characters"
               onKeyUp={e => e.key === 'Enter' && handleRegister()}
-              style={{ width: '100%', border: '2px solid #ebebeb', padding: '10px 14px', borderRadius: '4px', fontSize: '14px', outline: 'none', boxSizing: 'border-box' }} />
+              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-zinc-400 transition-colors" />
           </div>
 
           <button onClick={handleRegister} disabled={loading}
-            style={{ width: '100%', background: '#f43f5e', color: 'white', padding: '12px', border: 'none', borderRadius: '4px', fontWeight: '800', fontSize: '15px', cursor: 'pointer', letterSpacing: '0.5px', opacity: loading ? 0.7 : 1 }}>
-            {loading ? "CREATING..." : "CREATE ACCOUNT →"}
+            className="w-full bg-brand text-white text-sm font-bold py-3 rounded-xl transition-all disabled:opacity-60 hover:bg-brand-dark cursor-pointer border-none tracking-wide">
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
 
-          <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: '#7e7e7e' }}>
+          <p className="text-center mt-5 text-sm text-zinc-500">
             Already have an account?{' '}
-            <a href="/login" style={{ color: '#f43f5e', fontWeight: '800', textDecoration: 'none' }}>Login</a>
+            <Link to="/login" className="text-brand font-semibold no-underline hover:underline">Login</Link>
           </p>
-
         </div>
       </div>
     </div>

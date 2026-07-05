@@ -1,39 +1,41 @@
+import { Link } from 'react-router-dom'
+
 function PaymentSuccess() {
   return (
-    <div style={{ background: '#f5f5f6', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
-      <div style={{ textAlign: 'center', maxWidth: '480px' }}>
-
-        <div style={{ width: '90px', height: '90px', background: 'linear-gradient(135deg, #16a34a, #22c55e)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: '40px' }}>
-          ✓
+    <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
+      <div className="text-center max-w-md">
+        <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+          <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
         </div>
 
-        <h1 style={{ fontSize: '28px', fontWeight: '900', color: '#1a1a2e', marginBottom: '12px' }}>Order Placed! 🎉</h1>
-        <p style={{ color: '#7e7e7e', fontSize: '15px', lineHeight: '1.8', marginBottom: '32px' }}>
-          Thank you for shopping at <strong>WearIt</strong>!<br />Your order is being processed.
+        <h1 className="text-2xl md:text-3xl font-black text-dark mb-3">Order Placed!</h1>
+        <p className="text-sm text-zinc-500 leading-relaxed mb-8">
+          Thank you for shopping at <strong className="text-dark">WearIt</strong>!<br />Your order is being processed.
         </p>
 
-        <div style={{ background: 'white', borderRadius: '8px', padding: '20px', marginBottom: '32px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div className="bg-white rounded-2xl border border-border p-5 mb-8 text-left">
           {[
-            { icon: '📦', text: 'Order is being processed' },
-            { icon: '🚚', text: 'Delivery within 2-3 business days' },
-            { icon: '📧', text: 'Confirmation sent to your email' },
+            { icon: '\uD83D\uDCE6', text: 'Order is being processed' },
+            { icon: '\uD83D\uDE9A', text: 'Delivery within 2-3 business days' },
+            { icon: '\uD83D\uDCE7', text: 'Confirmation sent to your email' },
           ].map((item) => (
-            <div key={item.text} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid #f5f5f6' }}>
-              <span style={{ fontSize: '20px' }}>{item.icon}</span>
-              <span style={{ fontSize: '14px', color: '#7e7e7e' }}>{item.text}</span>
+            <div key={item.text} className="flex items-center gap-3 py-3 border-b border-border last:border-b-0">
+              <span className="text-xl">{item.icon}</span>
+              <span className="text-sm text-zinc-500">{item.text}</span>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
-          <a href="/orders" style={{ background: '#1a1a2e', color: 'white', padding: '12px 28px', borderRadius: '4px', fontWeight: '800', textDecoration: 'none', fontSize: '14px' }}>
-            VIEW ORDERS
-          </a>
-          <a href="/products" style={{ background: '#f43f5e', color: 'white', padding: '12px 28px', borderRadius: '4px', fontWeight: '800', textDecoration: 'none', fontSize: '14px' }}>
-            SHOP MORE →
-          </a>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link to="/orders" className="bg-dark text-white text-sm font-bold px-8 py-3.5 rounded-xl no-underline hover:bg-zinc-800 transition-colors">
+            View Orders
+          </Link>
+          <Link to="/products" className="bg-brand text-white text-sm font-bold px-8 py-3.5 rounded-xl no-underline hover:bg-brand-dark transition-colors">
+            Shop More &rarr;
+          </Link>
         </div>
-
       </div>
     </div>
   )
