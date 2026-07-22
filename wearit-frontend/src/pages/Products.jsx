@@ -1,129 +1,198 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import API_BASE from '../config'
+import { useSearchParams } from 'react-router-dom'
+import { IoFilter, IoClose, IoSearch } from 'react-icons/io5'
+import ProductCard from '../components/product/ProductCard'
+import { ProductGridSkeleton } from '../components/ui/Skeleton'
+import Button from '../components/ui/Button'
+import { getProducts } from '../api/products'
+import { SORT_OPTIONS } from '../utils/constants'
 
-function Products() {
+export default function Products() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
-  const [searchParams] = useSearchParams()
-  const [search, setSearch] = useState(searchParams.get('search') || "")
-  const [sort, setSort] = useState("")
-  const navigate = useNavigate()
+  const [, setTotal] = useState(0)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const limit = 12
+
+  const search = searchParams.get('search') || ''
+  const sort = searchParams.get('sort') || ''
+  const category = searchParams.get('category') || ''
+  const minPrice = searchParams.get('min_price') || ''
+  const maxPrice = searchParams.get('max_price') || ''
 
   useEffect(() => {
-    fetchProducts()
-  }, [page, sort])
-
-  async function fetchProducts() {
     setLoading(true)
-    try {
-      let url = `${API_BASE}/products/?page=${page}&limit=8`
-      if (sort) url += `&sort=${sort}`
-      if (search) url += `&search=${search}`
+    const params = { page, limit, sort, search: search || undefined }
+    if (minPrice) params.min_price = minPrice
+    if (maxPrice) params.max_price = maxPrice
 
-      const res = await fetch(url)
-      const data = await res.json()
-      setProducts(data)
-    } catch (e) {
-      console.error("Fetch failed", e)
-    }
-    setLoading(false)
+    getProducts(params)
+      .then(({ data }) => {
+        setProducts(Array.isArray(data) ? data : [])
+        setTotal(data.length || 0)
+      })
+      .catch(() => setProducts([]))
+      .finally(() => setLoading(false))
+  }, [page, sort, search, minPrice, maxPrice])
+
+  const updateParam = (key, value) => {
+    const params = new URLSearchParams(searchParams)
+    if (value) params.set(key, value)
+    else params.delete(key)
+    params.delete('page')
+    setSearchParams(params)
+    setPage(1)
   }
 
+  const clearFilters = () => {
+    setSearchParams({})
+    setPage(1)
+  }
+
+  const hasFilters = search || sort || minPrice || maxPrice
+
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-6 md:py-10">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h1 className="text-xl md:text-2xl font-extrabold text-dark tracking-tight">
-            All Products <span className="text-zinc-400 text-sm font-medium">({products.length} items)</span>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+        <div>
+          <span className="text-[10px] uppercase tracking-[0.3em] text-muted font-medium">Products</span>
+          <h1 className="text-2xl md:text-3xl font-display font-bold mt-1">
+            {category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All Products'}
           </h1>
-
-          <div className="flex gap-3">
-            <div className="relative flex-1 sm:flex-none">
-              <input placeholder="Search clothes..." value={search}
-                onChange={e => setSearch(e.target.value)}
-                onKeyUp={e => { if (e.key === 'Enter') { setPage(1); fetchProducts() } }}
-                className="w-full sm:w-56 border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-zinc-400 transition-colors bg-white" />
-            </div>
-            <select value={sort} onChange={e => { setSort(e.target.value); setPage(1) }}
-              className="border border-border rounded-lg px-4 py-2.5 text-sm font-medium outline-none focus:border-zinc-400 transition-colors bg-white">
-              <option value="">Sort By</option>
-              <option value="price">Price: Low to High</option>
-              <option value="-price">Price: High to Low</option>
-              <option value="name">Name: A-Z</option>
-            </select>
-          </div>
+          {search && (
+            <p className="text-sm text-muted mt-1">Results for "{search}"</p>
+          )}
         </div>
+        <div className="flex items-center gap-3">
+          {/* Search */}
+          <div className="relative">
+            <IoSearch size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <input
+              type="text"
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => updateParam('search', e.target.value)}
+              className="pl-9 pr-4 py-2.5 text-sm bg-zinc-50 border border-border focus:outline-none focus:border-foreground w-48"
+            />
+          </div>
+          {/* Sort */}
+          <select
+            value={sort}
+            onChange={(e) => updateParam('sort', e.target.value)}
+            className="text-sm bg-zinc-50 border border-border px-3 py-2.5 focus:outline-none focus:border-foreground"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          {/* Mobile filter toggle */}
+          <button
+            onClick={() => setFiltersOpen(!filtersOpen)}
+            className="md:hidden p-2.5 border border-border hover:bg-zinc-50 cursor-pointer"
+          >
+            <IoFilter size={16} />
+          </button>
+        </div>
+      </div>
 
-        {/* Content */}
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl border border-border overflow-hidden animate-pulse">
-                <div className="aspect-[3/4] bg-zinc-100" />
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-zinc-100 rounded w-3/4" />
-                  <div className="h-3 bg-zinc-100 rounded w-full" />
-                  <div className="h-5 bg-zinc-100 rounded w-1/3" />
+      <div className="flex gap-8">
+        {/* Filters Sidebar */}
+        <aside className={`md:block w-56 flex-shrink-0 ${filtersOpen ? 'block' : 'hidden'}`}>
+          <div className="md:sticky md:top-24 space-y-6">
+            {/* Price Range */}
+            <div>
+              <h3 className="text-xs font-medium uppercase tracking-[0.15em] mb-3">Price Range</h3>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={minPrice}
+                  onChange={(e) => updateParam('min_price', e.target.value)}
+                  className="w-full text-sm bg-zinc-50 border border-border px-3 py-2 focus:outline-none focus:border-foreground"
+                />
+                <span className="self-center text-muted text-xs">—</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={maxPrice}
+                  onChange={(e) => updateParam('max_price', e.target.value)}
+                  className="w-full text-sm bg-zinc-50 border border-border px-3 py-2 focus:outline-none focus:border-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Active Filters */}
+            {hasFilters && (
+              <div>
+                <h3 className="text-xs font-medium uppercase tracking-[0.15em] mb-3">Active Filters</h3>
+                <div className="space-y-1">
+                  {search && (
+                    <span className="inline-flex items-center gap-1 text-xs bg-zinc-100 px-2 py-1">
+                      "{search}"
+                      <IoClose size={12} className="cursor-pointer" onClick={() => updateParam('search', '')} />
+                    </span>
+                  )}
+                  <button onClick={clearFilters} className="block text-xs text-brand hover:underline mt-2 cursor-pointer">
+                    Clear all filters
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-5xl mb-4">&#x1F6CD;</div>
-            <p className="text-lg font-bold text-zinc-400">No products found</p>
-            <button onClick={() => { setSearch(""); setPage(1); fetchProducts() }}
-              className="mt-4 text-sm font-semibold text-brand bg-rose-50 px-5 py-2.5 rounded-lg border border-brand-light cursor-pointer hover:bg-rose-100 transition-colors">
-              Clear Filters
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
-              {products.map((p) => (
-                <div key={p.id} onClick={() => navigate(`/product/${p.id}`)}
-                  className="group bg-white rounded-xl border border-border overflow-hidden cursor-pointer hover:shadow-md transition-shadow">
-                  <div className="aspect-[3/4] bg-zinc-50 relative overflow-hidden">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-4xl">&#x1F455;</div>
-                    )}
-                  </div>
-                  <div className="p-3 md:p-4">
-                    <h3 className="text-sm font-semibold text-dark mb-0.5 truncate">{p.name}</h3>
-                    <p className="text-xs text-zinc-400 mb-2 truncate">{p.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-bold text-dark">₹{p.price}</span>
-                      <span className={`text-[11px] font-semibold ${p.quantity > 0 ? 'text-emerald-600' : 'text-brand'}`}>
-                        {p.quantity > 0 ? `${p.quantity} in stock` : 'Out of Stock'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            )}
 
-            {/* Pagination */}
-            <div className="flex items-center justify-center gap-4 mt-10">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-                className="px-5 py-2.5 border border-border rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed hover:bg-zinc-50 bg-white cursor-pointer">
-                &larr; Prev
-              </button>
-              <span className="text-sm font-bold text-zinc-600">Page {page}</span>
-              <button onClick={() => setPage(p => p + 1)} disabled={products.length < 8}
-                className="px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed bg-dark text-white hover:bg-zinc-800 cursor-pointer">
-                Next &rarr;
-              </button>
+            <Button variant="outline" size="sm" className="w-full" onClick={clearFilters}>
+              Reset
+            </Button>
+          </div>
+        </aside>
+
+        {/* Product Grid */}
+        <div className="flex-1">
+          {loading ? (
+            <ProductGridSkeleton count={limit} />
+          ) : products.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-muted text-sm mb-4">No products found</p>
+              <Button variant="outline" size="sm" onClick={clearFilters}>
+                Clear Filters
+              </Button>
             </div>
-          </>
-        )}
+          ) : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                {products.map((product, idx) => (
+                  <ProductCard key={product.id} product={product} index={idx} />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {products.length >= limit && (
+                <div className="flex justify-center gap-4 mt-12">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={page === 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    Previous
+                  </Button>
+                  <span className="self-center text-xs text-muted">Page {page}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={products.length < limit}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
 }
-
-export default Products

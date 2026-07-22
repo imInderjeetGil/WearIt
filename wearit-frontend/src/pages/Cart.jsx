@@ -1,154 +1,197 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import API_BASE from '../config'
+import { motion } from 'framer-motion'
+import { IoTrashOutline } from 'react-icons/io5'
+import Button from '../components/ui/Button'
+import Skeleton from '../components/ui/Skeleton'
+import { formatPrice, isAuthenticated } from '../utils/helpers'
+import { getCart, removeFromCart } from '../api/cart'
+import { createRazorpayOrder, verifyPayment } from '../api/payments'
+import toast from 'react-hot-toast'
 
-function Cart() {
-  const [cartItems, setCartItems] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function Cart() {
   const navigate = useNavigate()
-  const token = localStorage.getItem("token")
-
-  async function fetchCart() {
-    setLoading(true)
-    try {
-      const res = await fetch(`${API_BASE}/cart/`, {
-        headers: { "Authorization": "Bearer " + token }
-      })
-      const data = await res.json()
-      setCartItems(data)
-    } catch (e) {
-      console.error("Cart fetch failed", e)
-    }
-      setLoading(false)
-  }
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [checkingOut, setCheckingOut] = useState(false)
 
   useEffect(() => {
-    if (!token) { navigate("/login"); return }
-    fetchCart()
-  }, [])
+    if (!isAuthenticated()) {
+      navigate('/login')
+      return
+    }
+    getCart()
+      .then(({ data }) => setItems(data))
+      .catch(() => toast.error('Failed to load cart'))
+      .finally(() => setLoading(false))
+  }, [navigate])
 
-  async function removeItem(cartId) {
+  const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
+  const delivery = subtotal >= 999 ? 0 : 99
+  const total = subtotal + delivery
+
+  const handleRemove = async (id) => {
     try {
-      await fetch(`${API_BASE}/cart/${cartId}`, {
-        method: "DELETE",
-        headers: { "Authorization": "Bearer " + token }
-      })
-      fetchCart()
-    } catch (e) {
-      console.error("Remove failed", e)
+      await removeFromCart(id)
+      setItems((prev) => prev.filter((item) => item.id !== id))
+      toast.success('Item removed')
+    } catch {
+      toast.error('Failed to remove item')
     }
   }
 
-  async function checkout() {
+  const handleCheckout = async () => {
+    setCheckingOut(true)
     try {
-      const res = await fetch(`${API_BASE}/payments/create-order`, {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + token }
-      })
-      const data = await res.json()
+      const { data } = await createRazorpayOrder()
+      const { razorpay_order_id, amount, order_id, razorpay_key_id } = data
+
       const options = {
-        key: data.razorpay_key_id,
-        amount: data.amount,
-        currency: "INR",
-        name: "WearIt",
-        description: "Your WearIt Order",
-        order_id: data.razorpay_order_id,
-        handler: async function (response) {
-          await fetch(`${API_BASE}/payments/verify`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-            body: JSON.stringify({ ...response, order_id: data.order_id })
-          })
-          window.location.href = "/payment-success"
+        key: razorpay_key_id,
+        amount,
+        currency: 'INR',
+        name: 'WearIt',
+        description: 'Premium Fashion',
+        order_id: razorpay_order_id,
+        handler: async (response) => {
+          try {
+            await verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              order_id,
+            })
+            navigate('/payment-success')
+          } catch {
+            toast.error('Payment verification failed')
+          }
         },
-        theme: { color: "#e11d48" }
+        modal: {
+          ondismiss: () => setCheckingOut(false),
+        },
+        prefill: {
+          contact: '',
+          email: '',
+        },
+        theme: { color: '#18181b' },
       }
+
       const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', () => {
+        toast.error('Payment failed')
+        setCheckingOut(false)
+      })
       rzp.open()
-    } catch (e) {
-      console.error("Checkout failed", e)
+    } catch {
+      toast.error('Failed to initiate payment')
+      setCheckingOut(false)
     }
   }
 
-  const total = cartItems.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0)
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Skeleton className="h-8 w-48 mb-8" />
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
+      </div>
+    )
+  }
 
-  if (loading) return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+  if (items.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-zinc-100 flex items-center justify-center">
+          <svg className="w-8 h-8 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+        </div>
+        <h2 className="text-xl font-display font-bold mb-2">Your bag is empty</h2>
+        <p className="text-sm text-muted mb-6">Looks like you haven't added anything yet.</p>
+        <Link to="/products" className="inline-flex items-center justify-center bg-foreground text-white px-8 py-3 text-sm font-medium uppercase tracking-[0.15em] hover:bg-foreground/90 transition-colors">
+          Start Shopping
+        </Link>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-6 md:py-10">
-        <h1 className="text-xl md:text-2xl font-extrabold text-dark tracking-tight mb-6">Your Cart</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="flex items-center gap-2 mb-8">
+        <Link to="/products" className="text-xs text-muted hover:text-foreground uppercase tracking-[0.1em] transition-colors">
+          Shopping
+        </Link>
+        <span className="text-muted text-[10px]">/</span>
+        <span className="text-xs uppercase tracking-[0.1em]">Shopping Bag</span>
+      </div>
 
-        {cartItems.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-border">
-            <div className="text-5xl mb-4">&#x1F6D2;</div>
-            <p className="text-lg font-bold text-zinc-400 mb-5">Your cart is empty</p>
-            <Link to="/products" className="inline-block bg-brand text-white text-sm font-bold px-8 py-3 rounded-xl no-underline hover:bg-brand-dark transition-colors">
-              Shop Now &rarr;
+      <h1 className="text-2xl md:text-3xl font-display font-bold mb-8">Shopping Bag ({items.length})</h1>
+
+      <div className="grid lg:grid-cols-3 gap-8 lg:gap-12">
+        {/* Cart Items */}
+        <div className="lg:col-span-2 space-y-4">
+          {items.map((item) => (
+            <motion.div
+              key={item.id}
+              layout
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex gap-4 p-4 border border-border"
+            >
+              <div className="w-24 h-28 bg-zinc-100 overflow-hidden flex-shrink-0">
+                {item.product.image_url ? (
+                  <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-zinc-300 text-xs">No image</div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <Link to={`/product/${item.product_id}`} className="text-sm font-medium hover:text-brand transition-colors">
+                  {item.product.name}
+                </Link>
+                <p className="text-xs text-muted mt-1">Qty: {item.quantity}</p>
+                <p className="text-sm font-semibold mt-2">{formatPrice(item.product.price)}</p>
+              </div>
+              <button onClick={() => handleRemove(item.id)} className="self-start p-1 text-muted hover:text-brand transition-colors cursor-pointer" aria-label="Remove item">
+                <IoTrashOutline size={18} />
+              </button>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Order Summary */}
+        <div className="lg:col-span-1">
+          <div className="border border-border p-6 lg:sticky lg:top-24">
+            <h2 className="text-sm font-medium uppercase tracking-[0.15em] mb-4">Order Summary</h2>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted">Subtotal</span>
+                <span>{formatPrice(subtotal)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Delivery</span>
+                <span>{delivery === 0 ? <span className="text-emerald-600">Free</span> : formatPrice(delivery)}</span>
+              </div>
+              {delivery > 0 && (
+                <p className="text-[11px] text-muted">Add ₹{formatPrice(999 - subtotal)} more for free delivery</p>
+              )}
+              <div className="border-t border-border pt-3 flex justify-between font-semibold text-base">
+                <span>Total</span>
+                <span>{formatPrice(total)}</span>
+              </div>
+            </div>
+            <Button variant="primary" size="lg" className="w-full mt-6" onClick={handleCheckout} loading={checkingOut}>
+              Proceed to Checkout
+            </Button>
+            <Link to="/products" className="block text-center text-xs text-muted hover:text-foreground mt-4 underline underline-offset-4">
+              Continue Shopping
             </Link>
           </div>
-        ) : (
-          <div className="grid lg:grid-cols-[1fr_380px] gap-6">
-            {/* Cart Items */}
-            <div className="space-y-3">
-              {cartItems.map((item) => (
-                <div key={item.id} className="bg-white rounded-xl border border-border p-4 flex gap-4">
-                  <div className="w-20 h-20 md:w-24 md:h-24 bg-zinc-50 rounded-lg overflow-hidden flex-shrink-0">
-                    {item.product?.image_url
-                      ? <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center text-2xl">&#x1F455;</div>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm md:text-base font-semibold text-dark truncate">{item.product?.name}</h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">Qty: {item.quantity}</p>
-                    <p className="text-base font-bold text-dark mt-1.5">₹{item.product?.price}</p>
-                  </div>
-                  <button onClick={() => removeItem(item.id)}
-                    className="text-xs font-bold text-brand bg-transparent border-none cursor-pointer hover:underline self-start flex-shrink-0">
-                    REMOVE
-                  </button>
-                </div>
-              ))}
-            </div>
-
-            {/* Summary */}
-            <div className="bg-white rounded-xl border border-border p-6 h-fit lg:sticky lg:top-24">
-              <h2 className="text-sm font-bold text-dark uppercase tracking-wider mb-5">Order Summary</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between text-zinc-500">
-                  <span>Subtotal</span>
-                  <span className="font-semibold text-dark">₹{total}</span>
-                </div>
-                <div className="flex justify-between text-emerald-600 font-semibold">
-                  <span>Delivery</span>
-                  <span>FREE</span>
-                </div>
-              </div>
-              <div className="border-t border-border mt-4 pt-4 flex justify-between mb-6">
-                <span className="text-base font-bold text-dark">Total</span>
-                <span className="text-xl font-black text-dark">₹{total}</span>
-              </div>
-              <button onClick={checkout}
-                className="w-full bg-brand text-white text-sm font-bold py-3.5 rounded-xl hover:bg-brand-dark transition-colors cursor-pointer border-none tracking-wide">
-                Proceed to Checkout &rarr;
-              </button>
-
-              <div className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-zinc-400">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/>
-                </svg>
-                Secure checkout with Razorpay
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   )
 }
-
-export default Cart

@@ -1,92 +1,107 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import API_BASE from '../config'
+import { motion } from 'framer-motion'
+import Badge from '../components/ui/Badge'
+import Skeleton from '../components/ui/Skeleton'
+import { formatPrice, isAuthenticated } from '../utils/helpers'
+import { getMyOrders } from '../api/orders'
 
-function Orders() {
+const statusVariant = {
+  pending: 'pending',
+  paid: 'paid',
+  failed: 'failed',
+  delivered: 'delivered',
+}
+
+export default function Orders() {
+  const navigate = useNavigate()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
-  const token = localStorage.getItem("token")
-
-  const statusStyle = {
-    pending: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
-    paid: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
-    failed: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
-    delivered: { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200' },
-  }
-
-  async function fetchOrders() {
-    setLoading(true)
-    try {
-      const res = await fetch(`${API_BASE}/orders/my-orders`, {
-        headers: { "Authorization": "Bearer " + token }
-      })
-      const data = await res.json()
-      setOrders(data)
-    } catch (e) {
-      console.error("Orders fetch failed", e)
-    }
-    setLoading(false)
-  }
 
   useEffect(() => {
-    if (!token) { navigate("/login"); return }
-    fetchOrders()
-  }, [])
+    if (!isAuthenticated()) {
+      navigate('/login')
+      return
+    }
+    getMyOrders()
+      .then(({ data }) => setOrders(data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [navigate])
 
-  if (loading) return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Skeleton className="h-8 w-48 mb-8" />
+        <div className="space-y-4">
+          {[1, 2].map((i) => (
+            <Skeleton key={i} className="h-32 w-full" />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (orders.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <h2 className="text-xl font-display font-bold mb-2">No orders yet</h2>
+        <p className="text-sm text-muted mb-6">Start shopping to see your orders here.</p>
+        <Link to="/products" className="inline-flex items-center justify-center bg-foreground text-white px-8 py-3 text-sm font-medium uppercase tracking-[0.15em] hover:bg-foreground/90 transition-colors">
+          Shop Now
+        </Link>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-zinc-50">
-      <div className="max-w-5xl mx-auto px-4 md:px-8 lg:px-12 py-6 md:py-10">
-        <h1 className="text-xl md:text-2xl font-extrabold text-dark tracking-tight mb-6">Your Orders</h1>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <h1 className="text-2xl md:text-3xl font-display font-bold mb-8">My Orders</h1>
 
-        {orders.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-border">
-            <div className="text-5xl mb-4">&#x1F4CB;</div>
-            <p className="text-lg font-bold text-zinc-400 mb-5">No orders yet</p>
-            <Link to="/products" className="inline-block bg-brand text-white text-sm font-bold px-8 py-3 rounded-xl no-underline hover:bg-brand-dark transition-colors">
-              Shop Now &rarr;
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {orders.map((order) => {
-              const s = statusStyle[order.status] || { bg: 'bg-zinc-50', text: 'text-zinc-700', border: 'border-zinc-200' }
-              return (
-                <div key={order.id} className="bg-white rounded-xl border border-border p-5 md:p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <div>
-                      <p className="text-xs text-zinc-400 mb-1">
-                        Order #{order.id} &middot; {new Date(order.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                      </p>
-                      <p className="text-xl font-extrabold text-dark">₹{order.total_amount}</p>
-                    </div>
-                    <span className={`self-start text-[11px] font-bold px-3 py-1.5 rounded-full border ${s.bg} ${s.text} ${s.border}`}>
-                      {order.status?.toUpperCase()}
-                    </span>
-                  </div>
+      <div className="space-y-4">
+        {orders.map((order) => (
+          <motion.div
+            key={order.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="border border-border p-4 md:p-6"
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+              <div>
+                <p className="text-xs text-muted uppercase tracking-[0.1em]">Order #{order.id}</p>
+                <p className="text-xs text-muted mt-0.5">
+                  {order.created_at ? new Date(order.created_at).toLocaleDateString('en-IN', {
+                    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+                  }) : ''}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Badge variant={statusVariant[order.status] || 'default'}>
+                  {order.status}
+                </Badge>
+                <span className="text-sm font-semibold">{formatPrice(order.total_amount)}</span>
+              </div>
+            </div>
 
-                  <div className="border-t border-border pt-4 space-y-2">
-                    {order.items.map(item => (
-                      <Link key={item.id} to={`/product/${item.product_id}`}
-                        className="block text-sm text-brand font-semibold no-underline hover:underline">
-                        Product #{item.product_id} &times; {item.quantity} &mdash; ₹{item.price}
-                      </Link>
-                    ))}
-                  </div>
+            {order.items && order.items.length > 0 && (
+              <div className="border-t border-border pt-3">
+                <p className="text-[10px] uppercase tracking-[0.15em] text-muted mb-2">Items</p>
+                <div className="space-y-1">
+                  {order.items.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={`/product/${item.product_id}`}
+                      className="block text-xs text-muted hover:text-foreground transition-colors"
+                    >
+                      {item.product_name || `Product #${item.product_id}`} × {item.quantity}
+                    </Link>
+                  ))}
                 </div>
-              )
-            })}
-          </div>
-        )}
+              </div>
+            )}
+          </motion.div>
+        ))}
       </div>
     </div>
   )
 }
-
-export default Orders

@@ -1,76 +1,92 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import API_BASE from '../config'
+import { Link, useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import Input from '../components/ui/Input'
+import Button from '../components/ui/Button'
+import { loginUser } from '../api/auth'
+import useAuthStore from '../store/authStore'
+import useCartStore from '../store/cartStore'
+import toast from 'react-hot-toast'
 
-function Login() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+export default function Login() {
+  const navigate = useNavigate()
+  const login = useAuthStore((s) => s.login)
+  const fetchCart = useCartStore((s) => s.fetchCart)
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  async function handleLogin() {
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    if (!email || !password) {
+      setError('Please fill in all fields')
+      return
+    }
     setLoading(true)
-    setError("")
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email, password: password })
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setError(typeof data.detail === 'string' ? data.detail : "Invalid credentials")
-      } else {
-        localStorage.setItem("token", data.access_token)
-        window.location.href = "/"
-      }
-    } catch {
-      setError("Something went wrong. Try again.")
+      const { data } = await loginUser(email, password)
+      login(data.access_token)
+      fetchCart()
+      toast.success('Welcome back!')
+      navigate('/')
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Invalid email or password')
     }
     setLoading(false)
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-sm"
+      >
         <div className="text-center mb-8">
-          <Link to="/" className="text-2xl font-black text-dark no-underline">Wear<span className="text-brand">It</span></Link>
-          <p className="text-sm text-zinc-500 mt-2">Login to your account</p>
+          <Link to="/" className="text-2xl font-display font-bold">
+            Wear<span className="text-brand">It</span>
+          </Link>
+          <h1 className="text-xl font-display font-bold mt-4">Welcome Back</h1>
+          <p className="text-sm text-muted mt-1">Sign in to your account</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-border p-6 md:p-8">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-rose-50 border border-rose-200 text-brand text-sm font-semibold px-4 py-3 rounded-lg mb-5">
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs px-4 py-3">
               {error}
             </div>
           )}
+          <Input
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="your@email.com"
+            autoComplete="email"
+          />
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="current-password"
+          />
+          <Button variant="primary" size="lg" className="w-full" loading={loading}>
+            Sign In
+          </Button>
+        </form>
 
-          <div className="mb-4">
-            <label className="block text-[11px] font-bold text-dark uppercase tracking-wider mb-1.5">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com"
-              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-zinc-400 transition-colors" />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-[11px] font-bold text-dark uppercase tracking-wider mb-1.5">Password</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
-              onKeyUp={e => e.key === 'Enter' && handleLogin()}
-              className="w-full border border-border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-zinc-400 transition-colors" />
-          </div>
-
-          <button onClick={handleLogin} disabled={loading}
-            className="w-full bg-brand text-white text-sm font-bold py-3 rounded-xl transition-all disabled:opacity-60 hover:bg-brand-dark cursor-pointer border-none tracking-wide">
-            {loading ? 'Logging in...' : 'Login'}
-          </button>
-
-          <p className="text-center mt-5 text-sm text-zinc-500">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-brand font-semibold no-underline hover:underline">Register</Link>
-          </p>
-        </div>
-      </div>
+        <p className="text-center text-sm text-muted mt-6">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-foreground underline underline-offset-4 font-medium">
+            Create one
+          </Link>
+        </p>
+      </motion.div>
     </div>
   )
 }
-
-export default Login
