@@ -10,7 +10,15 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from db.base import Base
-from models import user, product, cart, order
+import models.user
+import models.product
+import models.category
+import models.size
+import models.color
+import models.product_size
+import models.product_color
+import models.cart
+import models.order
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

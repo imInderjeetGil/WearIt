@@ -43,10 +43,11 @@ def place_order(db: Session, user_id: int):
     for item in order_items:
         item.order_id = order.id
         db.add(item)
-
+    for cart_item in cart_items:
+        db.delete(cart_item)
     db.commit()
     db.refresh(order)
-
+    order.items = order_items
     return order
 
 

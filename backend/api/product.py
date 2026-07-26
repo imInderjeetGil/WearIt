@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session
 from db.session import SessionLocal
-from schemas.product import ProductCreate, ProductResponse
+from schemas.product import ProductCreate, ProductResponse, ProductUpdate
 from services import product_service
 from core.dependencies import get_admin_user
 from models.user import User
@@ -26,8 +26,11 @@ def get_products(
     max_price: float | None = None,
     search: str | None = None,
     sort: str | None = None,
+    category_id: int | None = None,
+    size_id: int | None = None,
+    color_id: int | None = None,
     db: Session = Depends(get_db)):
-    return product_service.get_products(db,page,limit,min_price,max_price,search,sort)
+    return product_service.get_products(db,page,limit,min_price,max_price,search,sort,category_id,size_id,color_id)
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
@@ -44,7 +47,12 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db), _: Use
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
-def update_product(product_id: int, product: ProductCreate, db: Session = Depends(get_db), _: User = Depends(get_admin_user)):
+def update_product(
+    product_id: int,
+    product: ProductUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_admin_user),
+):
     
     updated = product_service.update_product(db, product_id, product)
     if not updated:

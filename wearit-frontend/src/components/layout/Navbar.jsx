@@ -9,10 +9,11 @@ import { CATEGORIES } from '../../utils/constants'
 import { isAuthenticated } from '../../utils/helpers'
 
 const navLinks = [
-  { label: 'Home', path: '/' },
-  { label: 'Shop All', path: '/products' },
-  { label: 'New Arrivals', path: '/products?sort=-created_at' },
-  { label: 'Sale', path: '/products?sort=-price' },
+  { label: "MEN", path: "/products" },
+  { label: "NEW ARRIVALS", path: "/products?sort=-created_at" },
+  { label: "TOPWEAR", path: "/products?category=topwear" },
+  { label: "BOTTOMWEAR", path: "/products?category=bottomwear" },
+  { label: "COLLECTIONS", path: "/products" },
 ]
 
 export default function Navbar() {
@@ -37,22 +38,25 @@ export default function Navbar() {
     <>
       {/* Top Bar */}
       <div className="hidden md:block bg-foreground text-white text-[10px] tracking-[0.2em] uppercase py-2 text-center">
-        Free delivery on orders over ₹999 &middot; Easy 15-day returns
+        FREE SHIPPING ON ORDERS ABOVE ₹999 &middot; Easy 15-day returns &middot; Premium quality products
       </div>
 
       {/* Main Navbar */}
-      <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border">
+      <nav className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-zinc-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 md:h-20">
+          <div className="flex items-center justify-between h-20 md:h-24">
             {/* Mobile Menu Toggle */}
             <button onClick={toggleMobileMenu} className="md:hidden p-2 -ml-2 cursor-pointer">
               {mobileMenuOpen ? <IoClose size={22} /> : <IoMenu size={22} />}
             </button>
 
             {/* Logo */}
-            <Link to="/" className="text-xl md:text-2xl font-display font-bold tracking-tight">
-              Wear<span className="text-brand">It</span>
-            </Link>
+            <Link
+    to="/"
+    className="absolute left-1/2 -translate-x-1/2 text-2xl md:text-3xl font-black tracking-[0.45em] uppercase"
+>
+    WEARIT
+</Link>
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-8">
@@ -60,7 +64,21 @@ export default function Navbar() {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className="text-xs uppercase tracking-[0.15em] font-medium text-muted hover:text-foreground transition-colors"
+                  className="
+relative
+text-[12px]
+tracking-[0.22em]
+font-semibold
+uppercase
+after:absolute
+after:left-0
+after:-bottom-2
+after:h-[1px]
+after:w-0
+after:bg-black
+after:transition-all
+hover:after:w-full
+"
                 >
                   {link.label}
                 </Link>
@@ -214,11 +232,40 @@ export default function Navbar() {
                     className="w-full text-2xl md:text-3xl font-light bg-transparent border-none outline-none placeholder:text-zinc-300"
                   />
                 </form>
-                <button onClick={closeSearch} className="text-xs uppercase tracking-[0.15em] text-muted hover:text-foreground cursor-pointer">
+                <button onClick={closeSearch}
+                className="text-xs uppercase tracking-[0.15em] text-muted hover:text-foreground cursor-pointer">
                   Close
                 </button>
               </div>
-              <p className="text-xs text-muted uppercase tracking-[0.15em]">Press Enter to search</p>
+              <div className="mt-10">
+  <p className="text-xs uppercase tracking-[0.25em] text-zinc-400 mb-5">
+    Trending Searches
+  </p>
+
+  <div className="flex flex-wrap gap-3">
+    {[
+      "Oversized Tees",
+      "Cargo Pants",
+      "Linen Shirts",
+      "Co-ords",
+      "Jeans",
+      "Polo T-Shirts",
+    ].map((item) => (
+      <button
+        key={item}
+        type="button"
+        onClick={() => {
+          setSearchQuery(item);
+          navigate(`/products?search=${encodeURIComponent(item)}`);
+          closeSearch();
+        }}
+        className="border border-zinc-300 px-5 py-2 text-sm uppercase tracking-wide transition-all duration-300 hover:bg-black hover:text-white hover:border-black cursor-pointer"
+      >
+        {item}
+      </button>
+    ))}
+  </div>
+</div>
             </div>
           </motion.div>
         )}

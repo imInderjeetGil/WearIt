@@ -30,7 +30,21 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     if not token:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return {"access_token": token}
+    db_user = (
+    db.query(User)
+    .filter(User.email == user.email)
+    .first()
+)
+
+    return {
+        "access_token": token,
+        "user": {
+            "id": db_user.id,
+            "name": db_user.name,
+            "email": db_user.email,
+            "role": db_user.role,
+        },
+    }
 
 @router.post("/create-admin")
 def create_admin(user: UserCreate, db: Session = Depends(get_db)):
