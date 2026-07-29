@@ -1,7 +1,7 @@
 // src/pages/LoginPage.jsx
 
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { loginUser } from "../api/auth";
@@ -20,6 +20,7 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const location = useLocation();
 
   function handleChange(e) {
     setForm((prev) => ({
@@ -55,7 +56,9 @@ login(
 if (payload.role === "admin") {
   navigate("/admin");
 } else {
-  navigate("/");
+  navigate(
+  location.state?.from || "/"
+);
 }
     } catch (err) {
       setError(

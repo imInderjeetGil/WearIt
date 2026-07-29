@@ -5,10 +5,19 @@ import FilterSidebar from "./FilterSidebar";
 export default function MobileFilterDrawer({
   open,
   onClose,
+
   minPrice,
   maxPrice,
   setMinPrice,
   setMaxPrice,
+
+  categoryId,
+  setCategoryId,
+
+  sizeId,
+  setSizeId,
+
+  clearFilters,
 }) {
   return (
     <Dialog
@@ -45,11 +54,19 @@ export default function MobileFilterDrawer({
           <div className="px-6 py-6">
 
             <FilterSidebar
-              minPrice={minPrice}
-              maxPrice={maxPrice}
-              setMinPrice={setMinPrice}
-              setMaxPrice={setMaxPrice}
-            />
+  minPrice={minPrice}
+  maxPrice={maxPrice}
+  setMinPrice={setMinPrice}
+  setMaxPrice={setMaxPrice}
+
+  categoryId={categoryId}
+  setCategoryId={setCategoryId}
+
+  sizeId={sizeId}
+  setSizeId={setSizeId}
+
+  clearFilters={clearFilters}
+/>
 
           </div>
 
@@ -57,10 +74,7 @@ export default function MobileFilterDrawer({
           <div className="sticky bottom-0 bg-white border-t p-4 flex gap-3">
 
             <button
-              onClick={() => {
-                setMinPrice(null);
-                setMaxPrice(null);
-              }}
+              onClick={clearFilters}
               className="flex-1 h-12 rounded-xl border"
             >
               Clear

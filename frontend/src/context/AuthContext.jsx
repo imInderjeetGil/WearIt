@@ -40,6 +40,7 @@ export function AuthProvider({ children }) {
     logoutUser();
     setToken(null);
     setUser(null);
+    
   };
 
   return (

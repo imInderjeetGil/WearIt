@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-
 import { placeOrder } from "../api/order";
 import useCartStore from "../store/cartStore";
 
@@ -14,8 +13,33 @@ export default function CheckoutPage() {
 } = useCartStore();
 
   const [loading, setLoading] = useState(false);
-
+const [form, setForm] = useState({
+  fullName: "",
+  phone: "",
+  address: "",
+  city: "",
+  pincode: "",
+});
  async function handlePlaceOrder() {
+  if (
+  !form.fullName.trim() ||
+  !form.phone.trim() ||
+  !form.address.trim() ||
+  !form.city.trim() ||
+  !form.pincode.trim()
+) {
+  toast.error("Please fill all shipping details.");
+  return;
+}
+if (!/^\d{10}$/.test(form.phone)) {
+  toast.error("Enter a valid 10-digit phone number.");
+  return;
+}
+
+if (!/^\d{6}$/.test(form.pincode)) {
+  toast.error("Enter a valid 6-digit pincode.");
+  return;
+}
   try {
     setLoading(true);
 
@@ -35,7 +59,12 @@ export default function CheckoutPage() {
     setLoading(false);
   }
 }
-
+function handleChange(e) {
+  setForm({
+    ...form,
+    [e.target.name]: e.target.value,
+  });
+}
   return (
     <section className="mx-auto max-w-6xl px-4 py-12">
 
@@ -50,31 +79,46 @@ export default function CheckoutPage() {
         <div className="space-y-5">
 
           <input
-            placeholder="Full Name"
-            className="h-14 w-full rounded-xl border px-4"
-          />
+  name="fullName"
+  value={form.fullName}
+  onChange={handleChange}
+  placeholder="Full Name"
+  className="h-14 w-full rounded-xl border px-4"
+/>
 
           <input
-            placeholder="Phone Number"
-            className="h-14 w-full rounded-xl border px-4"
-          />
+  name="phone"
+  value={form.phone}
+  onChange={handleChange}
+  placeholder="Phone Number"
+  className="h-14 w-full rounded-xl border px-4"
+/>
 
           <textarea
-            placeholder="Address"
-            className="h-36 w-full rounded-xl border p-4"
-          />
+  name="address"
+  value={form.address}
+  onChange={handleChange}
+  placeholder="Address"
+  className="h-36 w-full rounded-xl border p-4"
+/>
 
           <div className="grid grid-cols-2 gap-4">
 
             <input
-              placeholder="City"
-              className="h-14 rounded-xl border px-4"
-            />
+  name="city"
+  value={form.city}
+  onChange={handleChange}
+  placeholder="City"
+  className="h-14 rounded-xl border px-4"
+/>
 
             <input
-              placeholder="Pincode"
-              className="h-14 rounded-xl border px-4"
-            />
+  name="pincode"
+  value={form.pincode}
+  onChange={handleChange}
+  placeholder="Pincode"
+  className="h-14 rounded-xl border px-4"
+/>
 
           </div>
 

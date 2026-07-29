@@ -6,11 +6,7 @@ backend/templates/
 backend/.env
 
 # Node
-wearit-frontend/node_modules/
-wearit-frontend/dist/
-wearit-frontend/.env
-wearit-frontend/.env.production
-
+wearit-frontend
 # Env
 .env
 .env.production

@@ -1,119 +1,63 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+// src/pages/OrderSuccess.jsx
 
-import { placeOrder } from "../api/order";
-import useCartStore from "../store/cartStore";
+import { CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
-export default function CheckoutPage() {
-  const navigate = useNavigate();
-
-  const {
-    subtotal,
-    clearCart,
-  } = useCartStore();
-
-  const [loading, setLoading] = useState(false);
-
-  async function handlePlaceOrder() {
-    try {
-      setLoading(true);
-
-      await placeOrder();
-
-      clearCart();
-
-      toast.success("Order placed successfully");
-
-      navigate("/order-success");
-    } catch (err) {
-      toast.error(
-        err.response?.data?.detail ??
-          "Order failed"
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
+export default function OrderSuccess() {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12">
+    <section className="flex min-h-[80vh] items-center justify-center px-4">
 
-      <h1 className="mb-10 text-4xl font-black">
-        Checkout
-      </h1>
+      <div className="w-full max-w-xl rounded-3xl border p-10 text-center">
 
-      <div className="grid gap-10 lg:grid-cols-2">
+        <CheckCircle2
+          size={90}
+          className="mx-auto text-green-500"
+        />
 
-        {/* Shipping */}
+        <h1 className="mt-8 text-4xl font-black">
+          Order Placed!
+        </h1>
 
-        <div className="space-y-5">
+        <p className="mt-4 text-zinc-500 leading-7">
+          Thank you for shopping with WearIt.
+          <br />
+          Your order has been placed successfully.
+        </p>
 
-          <input
-            placeholder="Full Name"
-            className="h-14 w-full rounded-xl border px-4"
-          />
+        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
 
-          <input
-            placeholder="Phone Number"
-            className="h-14 w-full rounded-xl border px-4"
-          />
-
-          <textarea
-            placeholder="Address"
-            className="h-36 w-full rounded-xl border p-4"
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-
-            <input
-              placeholder="City"
-              className="h-14 rounded-xl border px-4"
-            />
-
-            <input
-              placeholder="Pincode"
-              className="h-14 rounded-xl border px-4"
-            />
-
-          </div>
-
-        </div>
-
-        {/* Summary */}
-
-        <div className="rounded-2xl border p-6">
-
-          <h2 className="text-2xl font-bold">
-            Order Summary
-          </h2>
-
-          <div className="mt-8 flex justify-between">
-            <span>Subtotal</span>
-            <span>₹{subtotal()}</span>
-          </div>
-
-          <div className="mt-4 flex justify-between">
-            <span>Shipping</span>
-            <span>Free</span>
-          </div>
-
-          <hr className="my-6" />
-
-          <div className="flex justify-between text-xl font-bold">
-            <span>Total</span>
-            <span>₹{subtotal()}</span>
-          </div>
-
-          <button
-            onClick={handlePlaceOrder}
-            disabled={loading}
-            className="mt-8 h-14 w-full rounded-xl bg-black text-white"
+          <Link
+            to="/products"
+            className="
+              flex-1
+              rounded-xl
+              border
+              py-4
+              text-center
+              font-semibold
+              transition
+              hover:bg-zinc-100
+            "
           >
-            {loading
-              ? "Placing Order..."
-              : "Place Order"}
-          </button>
+            Continue Shopping
+          </Link>
+
+          <Link
+            to="/orders"
+            className="
+              flex-1
+              rounded-xl
+              bg-black
+              py-4
+              text-center
+              font-semibold
+              text-white
+              transition
+              hover:bg-zinc-800
+            "
+          >
+            View Orders
+          </Link>
 
         </div>
 

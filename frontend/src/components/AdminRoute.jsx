@@ -1,21 +1,18 @@
-// src/components/ProtectedRoute.jsx
-
 import { Navigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 
-export default function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        Loading...
-      </div>
-    );
-  }
+export default function AdminRoute({ children }) {
+  const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) {
+    toast.error("Please login.");
     return <Navigate to="/login" replace />;
+  }
+
+  if (user?.role !== "admin") {
+    toast.error("Admin access required.");
+    return <Navigate to="/" replace />;
   }
 
   return children;

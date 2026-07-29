@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { getProduct } from "../api/products";
 import {toast} from "react-hot-toast";
 import useCartStore from "../store/cartStore";
+import { useAuth } from "../context/AuthContext";
+
 
 
 export default function ProductPage() {
@@ -19,14 +21,30 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
 
   const { addItem } = useCartStore();
+  const { isAuthenticated } = useAuth();
+const navigate = useNavigate();
+const location = useLocation();
 
 async function handleAddToCart() {
+  if (!isAuthenticated) {
+    navigate("/login", {
+      state: {
+        from: location.pathname,
+      },
+    });
+
+    return;
+  }
+
   try {
-    await addItem(product.id);
+    await addItem(product.id, quantity);
 
     toast.success("Added to cart");
-  } catch {
-    toast.error("Failed to add to cart");
+  } catch (err) {
+    toast.error(
+      err.response?.data?.detail ??
+        "Failed to add to cart"
+    );
   }
 }
 

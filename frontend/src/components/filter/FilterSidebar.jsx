@@ -10,6 +10,7 @@ export default function FilterSidebar({
   setCategoryId,
   sizeId,
   setSizeId,
+  clearFilters,
 }) {
   const [categories, setCategories] = useState([]);
 
@@ -185,7 +186,21 @@ export default function FilterSidebar({
   </div>
 
 </div>
-
+<button
+  onClick={clearFilters}
+  className="
+    mt-8
+    w-full
+    rounded-xl
+    border
+    py-3
+    font-medium
+    transition
+    hover:bg-zinc-100
+  "
+>
+  Clear Filters
+</button>
     </aside>
   );
 }

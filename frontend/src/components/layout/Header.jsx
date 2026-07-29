@@ -1,14 +1,20 @@
 import { Menu } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+
+import { useAuth } from "../../context/AuthContext";
 
 import Container from "./Container";
 import Logo from "./Logo";
 import DesktopNav from "./DesktopNav";
 import CartButton from "./CartButton";
 import MobileMenu from "./MobileMenu";
+import ProfileMenu from "./ProfileMenu";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+
+  const { isAuthenticated } = useAuth();
 
   return (
     <>
@@ -27,6 +33,8 @@ export default function Header() {
 
           <div className="flex h-16 items-center justify-between lg:h-20">
 
+            {/* Left */}
+
             <div className="flex items-center gap-4">
 
               <button
@@ -40,9 +48,24 @@ export default function Header() {
 
             </div>
 
+            {/* Center */}
+
             <DesktopNav />
 
+            {/* Right */}
+
             <div className="flex items-center gap-2">
+
+              {!isAuthenticated ? (
+                <Link
+                  to="/login"
+                  className="text-sm font-medium text-zinc-500 transition hover:text-black"
+                >
+                  Login
+                </Link>
+              ) : (
+                <ProfileMenu />
+              )}
 
               <CartButton />
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { SlidersHorizontal, ArrowUpDown } from "lucide-react";
-
+import { SlidersHorizontal, ArrowUpDown, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import Container from "../components/layout/Container";
 import SearchBar from "../components/filter/SearchBar";
 import FilterSidebar from "../components/filter/FilterSidebar";
@@ -26,17 +27,31 @@ export default function ProductsPage() {
   const [filterOpen, setFilterOpen] = useState(false);
 
   const [sortOpen, setSortOpen] = useState(false);
-const [categoryId, setCategoryId] = useState(null);
+  const [categoryId, setCategoryId] = useState(null);
 
-const [sizeId, setSizeId] = useState(null);
+  const [sizeId, setSizeId] = useState(null);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
+
+  const clearFilters = () => {
+    setSearch("");
+    setSort("-created_at");
+
+    setMinPrice(null);
+    setMaxPrice(null);
+
+    setCategoryId(null);
+    setSizeId(null);
+  };
   useEffect(() => {
     fetchProducts();
   }, [search,
-  sort,
-  minPrice,
-  maxPrice,
-  categoryId,
-  sizeId,]);
+    sort,
+    minPrice,
+    maxPrice,
+    categoryId,
+    sizeId,]);
 
   async function fetchProducts() {
     try {
@@ -49,8 +64,8 @@ const [sizeId, setSizeId] = useState(null);
         sort,
         min_price: minPrice,
         max_price: maxPrice,
-         category_id: categoryId,
-  size_id: sizeId,
+        category_id: categoryId,
+        size_id: sizeId,
       });
 
       const list = Array.isArray(data)
@@ -104,10 +119,10 @@ const [sizeId, setSizeId] = useState(null);
               setMinPrice={setMinPrice}
               setMaxPrice={setMaxPrice}
               categoryId={categoryId}
-  setCategoryId={setCategoryId}
-
-  sizeId={sizeId}
-  setSizeId={setSizeId}
+              setCategoryId={setCategoryId}
+              sizeId={sizeId}
+              setSizeId={setSizeId}
+              clearFilters={clearFilters}
             />
 
           </aside>
@@ -161,7 +176,7 @@ const [sizeId, setSizeId] = useState(null);
 
                   <div
                     key={index}
-                    className="aspect-[3/4] rounded-xl bg-zinc-100 animate-pulse"
+                    className="aspect-3/4 rounded-xl bg-zinc-100 animate-pulse"
                   />
 
                 ))}
@@ -172,14 +187,60 @@ const [sizeId, setSizeId] = useState(null);
 
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-8 xl:grid-cols-4">
 
-                {products.map((product) => (
+                <>
+  {isAdmin && (
+    <Link
+      to="/admin/products/new"
+      className="
+        group
+        flex
+        aspect-[3/4]
+        flex-col
+        items-center
+        justify-center
+        rounded-2xl
+        border-2
+        border-dashed
+        border-zinc-300
+        transition
+        hover:border-black
+        hover:bg-zinc-50
+      "
+    >
+      <div
+        className="
+          flex
+          h-16
+          w-16
+          items-center
+          justify-center
+          rounded-full
+          bg-zinc-100
+          transition
+          group-hover:bg-black
+          group-hover:text-white
+        "
+      >
+        <Plus size={34} />
+      </div>
 
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                  />
+      <p className="mt-6 text-lg font-semibold">
+        Add Product
+      </p>
 
-                ))}
+      <p className="mt-2 text-sm text-zinc-500">
+        Create a new product
+      </p>
+    </Link>
+  )}
+
+  {products.map((product) => (
+    <ProductCard
+      key={product.id}
+      product={product}
+    />
+  ))}
+</>
 
               </div>
 
@@ -201,10 +262,10 @@ const [sizeId, setSizeId] = useState(null);
         setMinPrice={setMinPrice}
         setMaxPrice={setMaxPrice}
         categoryId={categoryId}
-setCategoryId={setCategoryId}
-
-sizeId={sizeId}
-setSizeId={setSizeId}
+        setCategoryId={setCategoryId}
+        sizeId={sizeId}
+        setSizeId={setSizeId}
+        clearFilters={clearFilters}
       />
 
       {/* Mobile Sort */}
