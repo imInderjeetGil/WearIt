@@ -1,19 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
 from schemas.review import ReviewCreate, ReviewResponse
 from services import review_service
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, get_db
 from models.user import User
 
 router = APIRouter(prefix="/reviews", tags=["Reviews"])
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.get("/{product_id}", response_model=list[ReviewResponse])

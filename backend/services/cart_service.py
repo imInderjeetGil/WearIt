@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from models.cart import CartItem
+from models.product import Product
 from schemas.cart import CartItemAdd
 from fastapi import HTTPException
 
@@ -7,14 +8,23 @@ def get_cart(db: Session, user_id: int):
     return db.query(CartItem).filter(CartItem.user_id == user_id).all()
 
 def add_to_cart(db: Session, user_id: int, item: CartItemAdd):
+    product = db.query(Product).filter(Product.id == item.product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
     
     existing = db.query(CartItem).filter(
-        CartItem.user_id == user_id,
-        CartItem.product_id == item.product_id
-    ).first()
+    CartItem.user_id == user_id,
+    CartItem.product_id == item.product_id,
+    CartItem.size_id == item.size_id,
+).first()
     
+    requested_quantity = item.quantity + (existing.quantity if existing else 0)
+    if requested_quantity > product.quantity:
+        raise HTTPException(status_code=400, detail="Requested quantity is not available")
+
     if existing:
-        existing.quantity += item.quantity
+        existing.quantity = requested_quantity
         db.commit()
         db.refresh(existing)
         return existing
@@ -22,6 +32,7 @@ def add_to_cart(db: Session, user_id: int, item: CartItemAdd):
     cart_item = CartItem(
         user_id=user_id,
         product_id = item.product_id,
+        size_id = item.size_id,
         quantity = item.quantity
     )
     db.add(cart_item)

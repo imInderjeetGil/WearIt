@@ -51,16 +51,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_sizes_id'), 'sizes', ['id'], unique=False)
 
-    # Colors table
-    op.create_table(
-        'colors',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('name', sa.String(), nullable=False),
-        sa.Column('hex_code', sa.String(), nullable=True),
-        sa.PrimaryKeyConstraint('id'),
-    )
-    op.create_index(op.f('ix_colors_id'), 'colors', ['id'], unique=False)
-
     # Products table
     op.create_table(
         'products',
@@ -93,17 +83,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
     )
 
-    # Product Colors table
-    op.create_table(
-        'product_colors',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('product_id', sa.Integer(), nullable=False),
-        sa.Column('color_id', sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(['product_id'], ['products.id']),
-        sa.ForeignKeyConstraint(['color_id'], ['colors.id']),
-        sa.PrimaryKeyConstraint('id'),
-    )
-
+  
     # Cart Items table
     op.create_table(
         'cart_items',
@@ -162,12 +142,9 @@ def downgrade() -> None:
     op.drop_table('order_items')
     op.drop_table('orders')
     op.drop_table('cart_items')
-    op.drop_table('product_colors')
     op.drop_table('product_sizes')
     op.drop_index(op.f('ix_products_id'), table_name='products')
     op.drop_table('products')
-    op.drop_index(op.f('ix_colors_id'), table_name='colors')
-    op.drop_table('colors')
     op.drop_index(op.f('ix_sizes_id'), table_name='sizes')
     op.drop_table('sizes')
     op.drop_index(op.f('ix_categories_id'), table_name='categories')

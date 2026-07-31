@@ -3,8 +3,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
-import App from "./App";
-import { AuthProvider } from "./context/AuthContext";
+import App from "./app/App";
+import { AuthProvider } from "./features/auth/context/AuthContext";
 import "./styles/globals.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(

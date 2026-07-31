@@ -8,6 +8,8 @@ class CartItem(Base):
     id = Column(Integer,primary_key=True,index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     product_id = Column(Integer, ForeignKey("products.id"))
+    size_id = Column(Integer,ForeignKey("sizes.id"),nullable=False)
     quantity = Column(Integer, default=1)
     
     product = relationship("Product")
+    size = relationship("Size")

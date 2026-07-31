@@ -1,20 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
-from schemas.order import OrderResponse
+from schemas.order import OrderResponse, OrderUpdate
 from services import order_service
-from core.dependencies import get_current_user, get_admin_user
+from core.dependencies import get_current_user, get_admin_user, get_db
 from models.user import User
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/", response_model=OrderResponse)
@@ -36,3 +27,17 @@ def all_orders(db: Session = Depends(get_db), current_user: User = Depends(get_a
     for order in orders:
         order.items = order_service.get_order_items(db, order.id)
     return orders
+
+
+@router.patch("/{order_id}/status", response_model=OrderResponse)
+def update_order_status(
+    order_id: int,
+    status_update: OrderUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+):
+    order = order_service.update_order_status(db, order_id, status_update.status)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    order.items = order_service.get_order_items(db, order.id)
+    return order

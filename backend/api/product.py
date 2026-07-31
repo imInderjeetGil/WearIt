@@ -1,36 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, File, Query, UploadFile
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
 from schemas.product import ProductCreate, ProductResponse, ProductUpdate
 from services import product_service
-from core.dependencies import get_admin_user
+from core.dependencies import get_admin_user, get_db
 from models.user import User
 from services.s3_service import upload_image
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 @router.get("/", response_model=list[ProductResponse])
 def get_products(
-    page: int = 1,
-    limit: int=10,
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=10, ge=1, le=100),
     min_price: float | None = None,
     max_price: float | None = None,
     search: str | None = None,
     sort: str | None = None,
     category_id: int | None = None,
     size_id: int | None = None,
-    color_id: int | None = None,
-    db: Session = Depends(get_db)):
-    return product_service.get_products(db,page,limit,min_price,max_price,search,sort,category_id,size_id,color_id)
+    db: Session = Depends(get_db),
+):
+    return product_service.get_products(db,page,limit,min_price,max_price,search,sort,category_id,size_id)
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

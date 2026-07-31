@@ -1,19 +1,22 @@
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel, Field
 
 from schemas.category import CategoryResponse
 from schemas.product_size import ProductSizeResponse
-from schemas.product_color import ProductColorResponse
 
 
 class ProductBase(BaseModel):
     name: str
-    slug: str
+    slug: str | None = None
     description: str
 
-    price: float
-    discount_price: float | None = None
+    price: float = Field(ge=0)
+    discount_price: float | None = Field(default=None, ge=0)
 
-    quantity: int
+    quantity: int = Field(
+        default=0,
+        ge=0,
+        validation_alias=AliasChoices("quantity", "stock"),
+    )
 
     brand: str | None = None
 
@@ -23,7 +26,7 @@ class ProductBase(BaseModel):
 
 
 class ProductCreate(ProductBase):
-    pass
+    sizes: list[int] = []
 
 
 class ProductUpdate(BaseModel):
@@ -31,16 +34,22 @@ class ProductUpdate(BaseModel):
     slug: str | None = None
     description: str | None = None
 
-    price: float | None = None
-    discount_price: float | None = None
+    price: float | None = Field(default=None, ge=0)
+    discount_price: float | None = Field(default=None, ge=0)
 
-    quantity: int | None = None
+    quantity: int | None = Field(
+        default=None,
+        ge=0,
+        validation_alias=AliasChoices("quantity", "stock"),
+    )
 
     brand: str | None = None
 
     category_id: int | None = None
 
     image_url: str | None = None
+
+    sizes: list[int] | None = None
 
 
 class ProductResponse(ProductBase):
@@ -49,8 +58,7 @@ class ProductResponse(ProductBase):
     category: CategoryResponse | None = None
 
     sizes: list[ProductSizeResponse] = []
-    colors: list[ProductColorResponse] = []
-
+    
     image_url: str | None = None
 
     class Config:

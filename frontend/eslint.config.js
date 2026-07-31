@@ -17,5 +17,9 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+    rules: {
+      // Fetching data after mount necessarily updates component state.
+      "react-hooks/set-state-in-effect": "off",
+    },
   },
 ])

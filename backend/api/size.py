@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from core.dependencies import get_admin_user
-from db.session import SessionLocal
+from core.dependencies import get_admin_user, get_db
 from models.user import User
 from schemas.size import (
     SizeCreate,
@@ -16,13 +15,6 @@ router = APIRouter(
     tags=["Sizes"],
 )
 
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.get("/", response_model=list[SizeResponse])

@@ -2,7 +2,6 @@ from db.session import SessionLocal
 
 from seeds.categories import seed_categories
 from seeds.sizes import seed_sizes
-from seeds.colors import seed_colors
 from seeds.products import seed_products
 from seeds.relations import seed_product_relations
 
@@ -20,10 +19,7 @@ def main():
 
         print("📏 Seeding Sizes...")
         seed_sizes(db)
-
-        print("🎨 Seeding Colors...")
-        seed_colors(db)
-
+        
         print("👕 Seeding Products...")
         seed_products(db)
 

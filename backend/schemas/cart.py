@@ -1,9 +1,10 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from schemas.product import ProductResponse
 
 class CartItemAdd(BaseModel):
     product_id: int
-    quantity: int = 1
+    size_id: int
+    quantity: int = Field(default=1, ge=1)
     
 class CartItemResponse(BaseModel):
     id: int

@@ -33,7 +33,7 @@ services:
 
   # 3. React Frontend + Nginx Proxy Service
   frontend:
-    build: ./wearit-frontend
+    build: ./frontend
     container_name: wearit_frontend
     ports:
       - "81:80"

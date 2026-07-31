@@ -4,6 +4,8 @@ from models.cart import CartItem
 from models.product import Product
 from fastapi import HTTPException
 
+VALID_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"]
+
 def place_order(db: Session, user_id: int):
     
     cart_items = db.query(CartItem).filter(CartItem.user_id==user_id).all()
@@ -61,3 +63,17 @@ def get_all_orders(db: Session):
 
 def get_order_items(db: Session, order_id: int):
     return db.query(OrderItem).filter(OrderItem.order_id == order_id).all()
+
+
+def update_order_status(db: Session, order_id: int, status: str):
+    if status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid status")
+    
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        return None
+    
+    order.status = status
+    db.commit()
+    db.refresh(order)
+    return order

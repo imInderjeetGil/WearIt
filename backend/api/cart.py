@@ -1,20 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from db.session import SessionLocal
 from schemas.cart import CartItemAdd,CartItemResponse
 from services import cart_service
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, get_db
 from models.user import User
 
 router = APIRouter(prefix="/cart", tags=["Cart"])
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-        
 @router.get("/",response_model=list[CartItemResponse])
 def get_cart(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return cart_service.get_cart(db, current_user.id)

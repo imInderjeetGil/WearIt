@@ -1,11 +1,51 @@
 from fastapi import HTTPException
+import re
+
 from sqlalchemy import desc, or_
 from sqlalchemy.orm import Session, selectinload
 
 from models.product import Product
 from models.product_size import ProductSize
-from models.product_color import ProductColor
+
+from models.category import Category
+
+from models.size import Size
 from schemas.product import ProductCreate, ProductUpdate
+
+
+def _unique_slug(db: Session, value: str, product_id: int | None = None) -> str:
+    """Return a URL-safe slug that does not collide with another product."""
+    base_slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "product"
+    slug = base_slug
+    suffix = 2
+
+    while True:
+        query = db.query(Product).filter(Product.slug == slug)
+        if product_id is not None:
+            query = query.filter(Product.id != product_id)
+        if not query.first():
+            return slug
+        slug = f"{base_slug}-{suffix}"
+        suffix += 1
+
+
+def _validate_relations(
+    db: Session,
+    category_id: int | None,
+    sizes: list[int] | None,
+) -> None:
+    if category_id is not None and not db.get(Category, category_id):
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    for ids, model, label in [(sizes, Size, "size")]:
+        if ids is None:
+            continue
+        if len(ids) != len(set(ids)):
+            raise HTTPException(status_code=400, detail=f"Duplicate {label} selected")
+        existing_ids = {item.id for item in db.query(model).filter(model.id.in_(ids)).all()}
+        missing_ids = set(ids) - existing_ids
+        if missing_ids:
+            raise HTTPException(status_code=404, detail=f"{label.title()} not found")
 
 
 def get_products(
@@ -18,7 +58,6 @@ def get_products(
     sort=None,
     category_id=None,
     size_id=None,
-    color_id=None,
 ):
     
     query = (
@@ -26,7 +65,6 @@ def get_products(
     .options(
     selectinload(Product.category),
     selectinload(Product.sizes).selectinload(ProductSize.size),
-    selectinload(Product.colors).selectinload(ProductColor.color),
 )
 )
     
@@ -38,11 +76,15 @@ def get_products(
                 query = query.order_by(desc(Product.price))
             elif field == "name":
                 query = query.order_by(desc(Product.name))
+            elif field == "created_at":
+                query = query.order_by(desc(Product.created_at))
         else:
             if sort == "price":
                 query = query.order_by(Product.price)
             elif sort == "name":
                 query = query.order_by(Product.name)
+            elif sort == "created_at":
+                query = query.order_by(Product.created_at)
     
     # Searching logic
     if search is not None:
@@ -68,11 +110,6 @@ def get_products(
         query = query.join(ProductSize).filter(
         ProductSize.size_id == size_id
     )
-
-    if color_id:
-        query = query.join(ProductColor).filter(
-        ProductColor.color_id == color_id
-    )
     
     query = query.distinct()
     return query.offset(offset).limit(limit).all()
@@ -84,7 +121,6 @@ def get_product(db: Session, product_id: int):
         .options(
             selectinload(Product.category),
             selectinload(Product.sizes).selectinload(ProductSize.size),
-            selectinload(Product.colors).selectinload(ProductColor.color),
         )
         .filter(Product.id == product_id)
         .first()
@@ -94,7 +130,11 @@ def create_product(db: Session, product: ProductCreate):
     product_data = product.model_dump()
 
     sizes = product_data.pop("sizes", [])
-    colors = product_data.pop("colors", [])
+    _validate_relations(db, product_data.get("category_id"), sizes)
+    product_data["slug"] = _unique_slug(
+        db,
+        product_data.get("slug") or product_data["name"],
+    )
 
     db_product = Product(**product_data)
 
@@ -109,14 +149,7 @@ def create_product(db: Session, product: ProductCreate):
             stock=0,
         )
     )
-    
-    for color_id in colors:
-        db.add(
-        ProductColor(
-            product_id=db_product.id,
-            color_id=color_id,
-        )
-    ) 
+
     db.commit()
     db.refresh(db_product)
 
@@ -132,44 +165,34 @@ def update_product(
     if not db_product:
         return None
 
-    product_data = product.model_dump()
+    product_data = product.model_dump(exclude_unset=True)
 
-    sizes = product_data.pop("sizes", [])
-    colors = product_data.pop("colors", [])
+    sizes = product_data.pop("sizes", None)
+
+    _validate_relations(
+        db,
+        product_data.get("category_id"),
+        sizes,
+    )
+
+    if "slug" in product_data:
+        product_data["slug"] = _unique_slug(
+            db,
+            product_data["slug"] or product_data.get("name", db_product.name),
+            product_id,
+        )
+    elif "name" in product_data:
+        product_data["slug"] = _unique_slug(db, product_data["name"], product_id)
 
     # Update Product fields
     for key, value in product_data.items():
         setattr(db_product, key, value)
 
-    # Remove old relations
-    db.query(ProductSize).filter(
-        ProductSize.product_id == product_id
-    ).delete()
+    if sizes is not None:
+        db.query(ProductSize).filter(ProductSize.product_id == product_id).delete()
+        for size_id in sizes:
+            db.add(ProductSize(product_id=product_id, size_id=size_id, stock=0))
 
-    db.query(ProductColor).filter(
-        ProductColor.product_id == product_id
-    ).delete()
-
-    db.flush()
-
-    # Add new sizes
-    for size_id in sizes:
-        db.add(
-            ProductSize(
-                product_id=product_id,
-                size_id=size_id,
-                stock=0,
-            )
-        )
-
-    # Add new colors
-    for color_id in colors:
-        db.add(
-            ProductColor(
-                product_id=product_id,
-                color_id=color_id,
-            )
-        )
     db.commit()
     db.refresh(db_product)
 

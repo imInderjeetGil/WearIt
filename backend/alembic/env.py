@@ -14,9 +14,7 @@ import models.user
 import models.product
 import models.category
 import models.size
-import models.color
 import models.product_size
-import models.product_color
 import models.cart
 import models.order
 

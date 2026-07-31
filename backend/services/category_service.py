@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from models.category import Category
+from models.product import Product
 from schemas.category import CategoryCreate, CategoryUpdate
 
 
@@ -50,6 +51,13 @@ def delete_category(db: Session, category_id: int):
 
     if not db_category:
         return None
+
+    if db.query(Product.id).filter(Product.category_id == category_id).first():
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete a category that is assigned to products",
+        )
 
     db.delete(db_category)
     db.commit()

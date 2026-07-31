@@ -1,12 +1,10 @@
 import random
 
 from sqlalchemy.orm import Session
-
 from models.product import Product
 from models.size import Size
-from models.color import Color
 from models.product_size import ProductSize
-from models.product_color import ProductColor
+
 
 
 TOPWEAR = [
@@ -35,7 +33,6 @@ def seed_product_relations(db: Session):
     products = db.query(Product).all()
 
     sizes = db.query(Size).all()
-    colors = db.query(Color).all()
 
     size_map = {
         size.name: size.id
@@ -80,22 +77,6 @@ def seed_product_relations(db: Session):
                     product_id=product.id,
                     size_id=size_map[size],
                     stock=random.randint(5, 25),
-                )
-            )
-
-        # ---------- Colors ----------
-
-        available_colors = random.sample(
-            colors,
-            random.randint(2, 5),
-        )
-
-        for color in available_colors:
-
-            db.add(
-                ProductColor(
-                    product_id=product.id,
-                    color_id=color.id,
                 )
             )
 
