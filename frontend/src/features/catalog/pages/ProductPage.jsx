@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { Edit2, Trash2, Loader2, Check, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { getProduct } from "../api/products";
 import { deleteProduct } from "../api/products";
 import { toast } from "react-hot-toast";
@@ -86,9 +86,9 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <section className="max-w-1400px mx-auto px-4 lg:px-8 py-10 animate-pulse">
+      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-10 animate-pulse">
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
 
           <div className="aspect-square bg-zinc-200 rounded-xl" />
 
@@ -128,9 +128,9 @@ export default function ProductPage() {
 
   return (
     <>
-      <section className="max-w-1400px mx-auto px-4 lg:px-8 py-10">
+      <section className="max-w-[1400px] mx-auto px-4 lg:px-8 py-6 sm:py-10">
 
-        <div className="grid lg:grid-cols-2 gap-14">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-14">
 
           {/* Image */}
 
@@ -156,7 +156,7 @@ export default function ProductPage() {
 
             </p>
 
-            <h1 className="text-4xl lg:text-5xl font-black mt-3">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black mt-2 sm:mt-3 break-words">
 
               {product.name}
 
@@ -272,7 +272,7 @@ export default function ProductPage() {
             {/* Button */}
 
             {isAdmin ? (
-              <div className="mt-12 flex gap-4">
+              <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button
                   onClick={() => navigate(`/admin-panel/products/${id}/edit`)}
                   className="flex-1 h-14 rounded-xl border border-zinc-300 font-semibold hover:bg-zinc-50 transition"

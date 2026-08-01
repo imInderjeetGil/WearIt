@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Edit2, Trash2, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -10,7 +10,6 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
-  const navigate = useNavigate();
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -47,14 +46,14 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">Admin</p>
-          <h1 className="mt-2 text-4xl font-black">Products</h1>
+          <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">Admin</p>
+          <h1 className="mt-1 text-2xl sm:text-4xl font-black">Products</h1>
         </div>
         <Link
           to="/admin-panel/products/new"
-          className="h-12 px-6 rounded-xl bg-black text-white font-semibold hover:bg-zinc-800 transition"
+          className="flex h-12 items-center justify-center px-6 rounded-xl bg-black text-white font-semibold hover:bg-zinc-800 transition"
         >
           Add Product
         </Link>
@@ -70,7 +69,91 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <div className="rounded-2xl border bg-white overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="block lg:hidden divide-y divide-zinc-100">
+            {products.map((product) => (
+              <div key={product.id} className="p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  {product.image_url && (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="h-12 w-12 shrink-0 rounded-lg object-cover"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm truncate">{product.name}</p>
+                    <p className="text-xs text-zinc-500">
+                      {product.category?.name || "Uncategorized"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs sm:text-sm">
+                  <div>
+                    <span className="font-bold">
+                      ₹{product.discount_price ?? product.price}
+                    </span>
+                    {product.discount_price && (
+                      <span className="ml-2 line-through text-zinc-400">
+                        ₹{product.price}
+                      </span>
+                    )}
+                  </div>
+
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      product.quantity === 0
+                        ? "bg-red-100 text-red-800"
+                        : product.quantity < 10
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-green-100 text-green-800"
+                    }`}
+                  >
+                    {product.quantity === 0
+                      ? "Out of Stock"
+                      : product.quantity < 10
+                      ? "Low Stock"
+                      : `${product.quantity} in stock`}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                  <Link
+                    to={`/admin-panel/products/${product.id}/edit`}
+                    className="p-2 rounded-lg text-zinc-600 hover:bg-zinc-100 transition"
+                    title="Edit"
+                  >
+                    <Edit2 size={18} />
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(product.id)}
+                    disabled={deletingId === product.id}
+                    className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition"
+                    title="Delete"
+                  >
+                    {deletingId === product.id ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={18} />
+                    )}
+                  </button>
+                  <a
+                    href={`/products/${product.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-lg text-zinc-600 hover:bg-zinc-100 transition"
+                    title="View on Store"
+                  >
+                    <ExternalLink size={18} />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-zinc-50">
                 <tr>

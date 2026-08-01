@@ -39,7 +39,7 @@ export default function DesktopNav() {
               {link.name}
 
               {isActive && (
-                <span className="absolute -bottom-2 left-0 h-2px w-full rounded-full bg-black" />
+                <span className="absolute -bottom-2 left-0 h-[2px] w-full rounded-full bg-black" />
               )}
             </>
           )}

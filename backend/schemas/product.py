@@ -1,4 +1,4 @@
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, ConfigDict
 
 from schemas.category import CategoryResponse
 from schemas.product_size import ProductSizeResponse
@@ -63,3 +63,13 @@ class ProductResponse(ProductBase):
 
     class Config:
         from_attributes = True
+
+class ProductSummary(BaseModel):
+    id: int
+    name: str
+    slug: str
+    price: float
+    discount_price: float | None
+    image_url: str
+
+    model_config = ConfigDict(from_attributes=True)

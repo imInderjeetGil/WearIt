@@ -79,20 +79,20 @@ export default function ProductCard({ product }) {
 
       {/* Details */}
 
-      <div className="pt-4">
+      <div className="pt-3 sm:pt-4">
 
-        <p className="text-xs uppercase tracking-[0.25em] text-zinc-400">
+        <p className="text-[10px] sm:text-xs uppercase tracking-wider text-zinc-400 truncate">
           {product.brand}
         </p>
 
         <h3
           className="
-            mt-2
+            mt-1 sm:mt-2
             line-clamp-2
-            min-h-48px
-            text-[15px]
+            min-h-[2.25rem] sm:min-h-[2.5rem]
+            text-xs sm:text-[15px]
             font-medium
-            leading-6
+            leading-snug sm:leading-6
             transition
             group-hover:text-black
           "
@@ -100,15 +100,15 @@ export default function ProductCard({ product }) {
           {product.name}
         </h3>
 
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-2 flex flex-wrap items-baseline gap-1.5 sm:gap-2.5">
 
-          <span className="text-lg font-bold">
+          <span className="text-sm sm:text-lg font-bold">
             ₹
             {product.discount_price ?? product.price}
           </span>
 
           {hasDiscount && (
-            <span className="text-sm text-zinc-400 line-through">
+            <span className="text-xs sm:text-sm text-zinc-400 line-through">
               ₹{product.price}
             </span>
           )}

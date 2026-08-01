@@ -25,7 +25,7 @@ const slides = [
   },
   {
     id: 2,
-    image: hero2,
+    image: hero3,
     subtitle: "SUMMER COLLECTION",
     title: "Minimal. Modern.",
     description:
@@ -34,7 +34,7 @@ const slides = [
   },
   {
     id: 3,
-    image: hero3,
+    image: hero2,
     subtitle: "LIMITED DROP",
     title: "Own Your Style",
     description:
@@ -121,17 +121,15 @@ export default function Hero() {
               {/* Background Image */}
 
               <img
-                src={slide.image}
-                alt={slide.title}
-                className="
-                  h-[80vh]
-                  w-full
-                  object-cover
-                  lg:h-screen
-                  scale-110
-                  duration-[2000ms]
-                "
-              />
+  src={slide.image}
+  alt={slide.title}
+  style={{
+    height: "600px",
+    width: "100%",
+    objectFit: "cover",
+    duration: "0.5s",
+  }}
+/>
 
               {/* Overlay */}
 

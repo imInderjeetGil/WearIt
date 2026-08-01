@@ -72,8 +72,8 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-100">
-      <div className="mx-auto flex min-h-screen max-w-7xl">
+    <div className="py-6 sm:py-12 bg-zinc-50">
+      <div className="mx-auto flex min-h-[calc(100vh-200px)] max-w-7xl rounded-3xl overflow-hidden border">
 
         {/* Left */}
 

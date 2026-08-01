@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Upload, Image, X } from "lucide-react";
+import { Upload, X } from "lucide-react";
 
 import {
   getProduct,
@@ -140,7 +140,7 @@ setForm((prev) => ({
 setImagePreview(data.image_url);
 
       toast.success("Image uploaded");
-    } catch (err) {
+    } catch {
       toast.error("Failed to upload image");
     } finally {
       setUploadingImage(false);
@@ -191,8 +191,8 @@ setImagePreview(data.image_url);
   }
 
   return (
-    <section className="mx-auto max-w-4xl">
-      <h1 className="mb-8 text-4xl font-black">
+    <section className="mx-auto max-w-4xl px-4 py-6 sm:py-10">
+      <h1 className="mb-6 sm:mb-8 text-2xl sm:text-4xl font-black">
         {isEdit ? "Edit Product" : "Add Product"}
       </h1>
 
@@ -255,7 +255,20 @@ setImagePreview(data.image_url);
                 className="hidden"
                 disabled={uploadingImage}
               />
-              <div className="flex aspect-square w-full items-center justify-center rounded-xl border-2 border-dashed border-zinc-300 transition hover:border-black">
+              <div className=" relative
+    flex
+    h-80
+    md:h-96
+    w-full
+    items-center
+    justify-center
+    overflow-hidden
+    rounded-xl
+    border-2
+    border-dashed
+    border-zinc-300
+    transition
+    hover:border-black">
                 {imagePreview ? (
                   <div className="relative w-full h-full">
                     <img
@@ -313,7 +326,7 @@ setImagePreview(data.image_url);
         </div>
 
         {/* Pricing & Stock */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className="mb-2 block text-sm font-medium">
               Price (₹)
@@ -324,7 +337,7 @@ setImagePreview(data.image_url);
               value={form.price}
               onChange={handleChange}
               placeholder="Price"
-              className="h-14 rounded-xl border px-4"
+              className="h-14 w-full rounded-xl border px-4"
               required
               min="0"
               step="0.01"
@@ -341,7 +354,7 @@ setImagePreview(data.image_url);
               value={form.discount_price}
               onChange={handleChange}
               placeholder="Discount Price (optional)"
-              className="h-14 rounded-xl border px-4"
+              className="h-14 w-full rounded-xl border px-4"
               min="0"
               step="0.01"
             />
@@ -357,7 +370,7 @@ setImagePreview(data.image_url);
               value={form.quantity}
               onChange={handleChange}
               placeholder="Stock quantity"
-              className="h-14 rounded-xl border px-4"
+              className="h-14 w-full rounded-xl border px-4"
               required
               min="0"
             />

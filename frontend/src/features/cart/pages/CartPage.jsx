@@ -6,7 +6,7 @@ import { Trash2, ShoppingBag } from "lucide-react";
 import toast from "react-hot-toast";
 
 import useCartStore from "../store/cart-store";
-import {getSellingPrice, getSubtotal  } from "../../../shared/utils/pricing"
+import { getSellingPrice } from "../../../shared/utils/pricing";
 
 export default function CartPage() {
   const {
@@ -58,41 +58,45 @@ export default function CartPage() {
   }
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12">
+    <section className="mx-auto max-w-7xl px-4 py-6 sm:py-12">
 
-      <h1 className="mb-10 text-4xl font-black">
+      <h1 className="mb-6 sm:mb-10 text-2xl sm:text-4xl font-black">
         Shopping Cart
       </h1>
 
-      <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-6 sm:gap-10 lg:grid-cols-[2fr_1fr]">
 
         {/* Cart Items */}
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
 
           {items.map((item) => (
 
             <div
               key={item.id}
-              className="flex gap-5 rounded-2xl border p-5"
+              className="flex gap-3.5 sm:gap-5 rounded-2xl border p-3.5 sm:p-5"
             >
 
               <img
                 src={item.product.image_url}
                 alt={item.product.name}
-                className="h-32 w-24 rounded-xl object-cover"
+                className="h-24 w-20 sm:h-32 sm:w-24 shrink-0 rounded-xl object-cover"
               />
 
-              <div className="flex flex-1 flex-col justify-between">
+              <div className="flex flex-1 flex-col justify-between min-w-0">
 
                 <div>
 
-                  <h3 className="text-xl font-semibold">
+                  <h3 className="text-base sm:text-xl font-semibold break-words">
                     {item.product.name}
                   </h3>
 
                   <p className="mt-2 text-zinc-500">
                     ₹{getSellingPrice(item.product)}
+                  </p>
+
+                  <p className="mt-1 text-sm text-zinc-500">
+                    Size : {item.size.name}
                   </p>
 
                   <p className="mt-1 text-sm text-zinc-500">

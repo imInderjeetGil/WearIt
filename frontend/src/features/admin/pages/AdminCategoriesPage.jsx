@@ -26,7 +26,7 @@ export default function AdminCategoriesPage() {
     try {
       const { data } = await getCategories();
       setCategories(data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load categories");
     } finally {
       setLoading(false);
@@ -97,14 +97,14 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">Admin</p>
-          <h1 className="mt-2 text-4xl font-black">Categories</h1>
+          <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">Admin</p>
+          <h1 className="mt-1 text-2xl sm:text-4xl font-black">Categories</h1>
         </div>
         <button
           onClick={openCreate}
-          className="h-12 px-6 rounded-xl bg-black text-white font-semibold hover:bg-zinc-800 transition"
+          className="flex h-12 items-center justify-center px-6 rounded-xl bg-black text-white font-semibold hover:bg-zinc-800 transition"
         >
           <Plus size={20} className="mr-2" /> Add Category
         </button>
@@ -119,7 +119,44 @@ export default function AdminCategoriesPage() {
         </div>
       ) : (
         <div className="rounded-2xl border bg-white overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="block lg:hidden divide-y divide-zinc-100">
+            {categories.map((category) => (
+              <div key={category.id} className="p-4 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm truncate">{category.name}</p>
+                  <p className="text-xs text-zinc-500 font-mono mt-0.5">{category.slug}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs text-zinc-500 bg-zinc-100 px-2 py-1 rounded-full">
+                    {category.products?.length || 0} items
+                  </span>
+                  <button
+                    onClick={() => openEdit(category)}
+                    className="p-1.5 rounded-lg text-zinc-600 hover:bg-zinc-100 transition"
+                    title="Edit"
+                  >
+                    <Edit2 size={18} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(category.id)}
+                    disabled={deletingId === category.id}
+                    className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
+                    title="Delete"
+                  >
+                    {deletingId === category.id ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={18} />
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-zinc-50">
                 <tr>

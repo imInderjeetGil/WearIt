@@ -118,9 +118,42 @@ export default function AdminLayout() {
 
         </aside>
 
+        {/* Mobile Header / Subnav */}
+        <div className="block lg:hidden border-b bg-white p-3 overflow-x-auto">
+          <div className="flex items-center gap-2 min-w-max">
+            {links.map((link) => {
+              const Icon = link.icon;
+              return (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  end={link.to === "/admin-panel"}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium transition ${
+                      isActive
+                        ? "bg-black text-white"
+                        : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
+                    }`
+                  }
+                >
+                  <Icon size={16} />
+                  {link.name}
+                </NavLink>
+              );
+            })}
+            <NavLink
+              to="/"
+              className="flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-medium bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition"
+            >
+              <Store size={16} />
+              Store
+            </NavLink>
+          </div>
+        </div>
+
         {/* Dashboard */}
 
-        <main className="p-4 lg:p-8">
+        <main className="p-3 sm:p-4 lg:p-8">
 
           <Outlet />
 

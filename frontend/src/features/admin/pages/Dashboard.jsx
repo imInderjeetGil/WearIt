@@ -83,7 +83,7 @@ export default function Dashboard() {
     <>
       <DashboardHeader />
 
-      <div className="grid gap-6 grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
 
         <StatCard
           title="Products"

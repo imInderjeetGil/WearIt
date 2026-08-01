@@ -165,13 +165,13 @@ export default function ProductsPage() {
 
             {loading ? (
 
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-8">
+              <div className="grid grid-cols-2 gap-3.5 sm:gap-6 lg:grid-cols-3 lg:gap-8 xl:grid-cols-4">
 
                 {Array.from({ length: 8 }).map((_, index) => (
 
                   <div
                     key={index}
-                    className="aspect-3/4 rounded-xl bg-zinc-100 animate-pulse"
+                    className="aspect-[3/4] rounded-xl bg-zinc-100 animate-pulse"
                   />
 
                 ))}
@@ -180,7 +180,7 @@ export default function ProductsPage() {
 
             ) : (
 
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-8 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3.5 sm:gap-6 lg:grid-cols-3 lg:gap-8 xl:grid-cols-4">
 
                 <>
   {isAdmin && (

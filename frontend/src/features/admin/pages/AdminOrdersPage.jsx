@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Loader2, Truck, Package, CheckCircle2, Clock, AlertCircle, ChevronDown } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-import { getAllOrders, getOrderItems, updateOrderStatus } from "../../orders/api/orders";
+import { getAllOrders, updateOrderStatus } from "../../orders/api/orders";
 
 const statusConfig = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -26,7 +26,7 @@ export default function AdminOrdersPage() {
 
     setOrders(data);
 
-  } catch (err) {
+  } catch {
     toast.error("Failed to load orders");
   } finally {
     setLoading(false);
@@ -47,7 +47,7 @@ export default function AdminOrdersPage() {
           o.id === orderId ? { ...o, status: newStatus } : o
         )
       );
-    } catch (err) {
+    } catch {
       toast.error("Failed to update status");
     } finally {
       setUpdatingId(null);

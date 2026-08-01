@@ -12,33 +12,33 @@ export default function StatCard({
         group
         relative
         overflow-hidden
-        rounded-3xl
+        rounded-2xl sm:rounded-3xl
         border
         border-zinc-200
         bg-gradient-to-br
         from-white
         to-zinc-50
-        p-6
+        p-4 sm:p-6
         transition-all
         duration-300
         hover:-translate-y-1
         hover:shadow-xl
       "
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
 
-        <div>
+        <div className="min-w-0 flex-1">
 
-          <p className="text-sm uppercase tracking-widest text-zinc-500">
+          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-zinc-500 truncate">
             {title}
           </p>
 
-          <h2 className="mt-3 text-4xl font-black">
+          <h2 className="mt-2 text-2xl sm:text-3xl lg:text-4xl font-black break-words">
             {value}
           </h2>
 
           {subtitle && (
-            <p className="mt-2 text-sm text-zinc-500">
+            <p className="mt-1 text-xs sm:text-sm text-zinc-500">
               {subtitle}
             </p>
           )}
@@ -48,11 +48,15 @@ export default function StatCard({
         <div
           className="
             flex
-            h-14
-            w-14
+            h-10
+            w-10
+            sm:h-14
+            sm:w-14
+            shrink-0
             items-center
             justify-center
-            rounded-2xl
+            rounded-xl
+            sm:rounded-2xl
             bg-black
             text-white
             transition-transform
@@ -60,7 +64,7 @@ export default function StatCard({
             group-hover:rotate-6
           "
         >
-          <Icon size={26} />
+          <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
 
       </div>

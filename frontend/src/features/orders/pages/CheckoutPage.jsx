@@ -65,17 +65,17 @@ function handleChange(e) {
   });
 }
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12">
+    <section className="mx-auto max-w-6xl px-4 py-6 sm:py-12">
 
-      <h1 className="mb-10 text-4xl font-black">
+      <h1 className="mb-6 sm:mb-10 text-2xl sm:text-4xl font-black">
         Checkout
       </h1>
 
-      <div className="grid gap-10 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2">
 
         {/* Shipping */}
 
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
 
           <input
   name="fullName"
@@ -101,14 +101,14 @@ function handleChange(e) {
   className="h-36 w-full rounded-xl border p-4"
 />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             <input
   name="city"
   value={form.city}
   onChange={handleChange}
   placeholder="City"
-  className="h-14 rounded-xl border px-4"
+  className="h-14 w-full rounded-xl border px-4"
 />
 
             <input
@@ -116,7 +116,7 @@ function handleChange(e) {
   value={form.pincode}
   onChange={handleChange}
   placeholder="Pincode"
-  className="h-14 rounded-xl border px-4"
+  className="h-14 w-full rounded-xl border px-4"
 />
 
           </div>

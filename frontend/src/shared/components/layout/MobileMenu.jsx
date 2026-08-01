@@ -19,16 +19,17 @@ export default function MobileMenu({
       <div className="fixed inset-0 bg-black/40" />
 
       <div className="fixed inset-0 flex">
-        <DialogPanel className="h-full w-72 bg-white p-6">
-          <div className="mb-10 flex items-center justify-between">
-            <h2 className="text-xl font-bold">
-              MENU
-            </h2>
+        <DialogPanel className="h-full w-80 max-w-[85vw] bg-white p-6 overflow-y-auto flex flex-col justify-between">
+          <div>
+            <div className="mb-8 flex items-center justify-between">
+              <h2 className="text-xl font-bold tracking-wider">
+                MENU
+              </h2>
 
-            <button onClick={onClose}>
-              <X size={24} />
-            </button>
-          </div>
+              <button onClick={onClose} className="p-1 text-zinc-600 hover:text-black">
+                <X size={24} />
+              </button>
+            </div>
 
           <div className="space-y-5">
 
@@ -157,6 +158,7 @@ export default function MobileMenu({
   )}
 
 </div>
+          </div>
         </DialogPanel>
       </div>
     </Dialog>

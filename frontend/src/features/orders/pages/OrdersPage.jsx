@@ -61,30 +61,30 @@ export default function OrdersPage() {
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12">
+    <section className="mx-auto max-w-6xl px-4 py-6 sm:py-12">
 
-      <h1 className="mb-10 text-4xl font-black">
+      <h1 className="mb-6 sm:mb-10 text-2xl sm:text-4xl font-black">
         My Orders
       </h1>
 
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
 
         {orders.map((order) => (
 
           <div
             key={order.id}
-            className="rounded-2xl border p-6"
+            className="rounded-2xl border p-4 sm:p-6"
           >
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
 
               <div>
 
-                <h2 className="font-bold">
+                <h2 className="font-bold text-base sm:text-lg">
                   Order #{order.id}
                 </h2>
 
-                <p className="text-sm text-zinc-500">
+                <p className="text-xs sm:text-sm text-zinc-500">
                   {new Date(
                     order.created_at
                   ).toLocaleDateString()}
@@ -93,7 +93,7 @@ export default function OrdersPage() {
               </div>
 
               <span
-  className={`rounded-full px-4 py-2 text-sm font-medium ${
+  className={`rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium ${
     statusStyles[order.status] ??
     "bg-zinc-100 text-zinc-700"
   }`}
@@ -103,59 +103,61 @@ export default function OrdersPage() {
 
             </div>
 
-            <div className="mt-6 space-y-4">
+            <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
 
               {order.items.map((item) => (
 
   <div
     key={item.id}
-    className="flex gap-4 rounded-xl border p-4"
+    className="flex flex-col sm:flex-row gap-3 sm:gap-4 rounded-xl border p-3.5 sm:p-4"
   >
 
-    <Link to={`/products/${item.product.id}`}>
+    <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
+      <Link to={`/products/${item.product.id}`} className="shrink-0">
 
-      <img
-        src={item.product.image_url}
-        alt={item.product.name}
-        className="h-24 w-24 rounded-xl object-cover"
-      />
-
-    </Link>
-
-    <div className="flex-1">
-
-      <Link
-        to={`/products/${item.product.id}`}
-        className="hover:underline"
-      >
-
-        <h3 className="font-semibold">
-          {item.product.name}
-        </h3>
+        <img
+          src={item.product.image_url}
+          alt={item.product.name}
+          className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl object-cover"
+        />
 
       </Link>
 
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="flex-1 min-w-0">
 
-        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium">
-          Size {item.size?.name}
-        </span>
+        <Link
+          to={`/products/${item.product.id}`}
+          className="hover:underline"
+        >
+
+          <h3 className="font-semibold text-sm sm:text-base break-words">
+            {item.product.name}
+          </h3>
+
+        </Link>
+
+        <div className="mt-1.5 flex flex-wrap gap-2">
+
+          <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium">
+            Size {item.size?.name}
+          </span>
+
+        </div>
+
+        <p className="mt-2 text-xs sm:text-sm text-zinc-500">
+          Qty: {item.quantity}
+        </p>
 
       </div>
-
-      <p className="mt-3 text-sm text-zinc-500">
-        Qty: {item.quantity}
-      </p>
-
     </div>
 
-    <div className="text-right">
+    <div className="text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 flex sm:flex-col justify-between sm:justify-start">
 
-      <p className="font-semibold">
+      <p className="font-semibold text-sm sm:text-base">
         ₹{item.price}
       </p>
 
-      <p className="mt-2 text-sm text-zinc-500">
+      <p className="text-xs sm:text-sm text-zinc-500">
         Total ₹{item.price * item.quantity}
       </p>
 
