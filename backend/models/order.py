@@ -11,6 +11,12 @@ class Order(Base):
     total_amount = Column(Float)
     status = Column(String, default="pending")
     created_at = Column(DateTime, server_default=func.now())
+    user = relationship("User")
+    items = relationship(
+        "OrderItem",
+        back_populates="order",
+        cascade="all, delete-orphan",
+    )
     
 class OrderItem(Base):
     __tablename__ = "order_items"
@@ -21,6 +27,9 @@ class OrderItem(Base):
     size_id = Column(Integer,ForeignKey("sizes.id"),nullable=False)
     quantity = Column(Integer)
     price = Column(Float)
-    
     product = relationship("Product")
     size = relationship("Size")
+    order = relationship(
+    "Order",
+    back_populates="items",
+)

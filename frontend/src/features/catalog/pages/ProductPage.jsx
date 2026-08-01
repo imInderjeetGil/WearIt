@@ -34,7 +34,7 @@ export default function ProductPage() {
     }
 
     try {
-      await addItem(product.id, quantity,product.id,
+      await addItem(product.id,
     selectedSize.size.id,quantity);
 
       toast.success("Added to cart");
@@ -51,7 +51,7 @@ export default function ProductPage() {
       setDeleting(true);
       await deleteProduct(id);
       toast.success("Product deleted");
-      navigate("/admin/products");
+      navigate("/admin-panel/products");
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to delete product");
     } finally {
@@ -274,7 +274,7 @@ export default function ProductPage() {
             {isAdmin ? (
               <div className="mt-12 flex gap-4">
                 <button
-                  onClick={() => navigate(`/admin/products/${id}/edit`)}
+                  onClick={() => navigate(`/admin-panel/products/${id}/edit`)}
                   className="flex-1 h-14 rounded-xl border border-zinc-300 font-semibold hover:bg-zinc-50 transition"
                 >
                   Edit Product
@@ -304,18 +304,7 @@ export default function ProductPage() {
 
       </section>
 
-      {/* Sticky Mobile Button */}
-      {!isAdmin && (
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t p-4">
-          <button
-            onClick={handleAddToCart}
-            disabled={product.quantity < 1}
-            className="h-14 w-full rounded-xl bg-black text-white font-semibold transition hover:bg-zinc-800"
-          >
-            {product.quantity < 1 ? "Out of Stock" : "Add To Cart"}
-          </button>
-        </div>
-      )}
+      
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (

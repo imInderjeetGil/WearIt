@@ -180,7 +180,7 @@ setImagePreview(data.image_url);
         toast.success("Product created");
       }
 
-      navigate("/admin/products");
+      navigate("/admin-panel/products");
     } catch (err) {
       toast.error(
         err.response?.data?.detail ?? "Something went wrong"

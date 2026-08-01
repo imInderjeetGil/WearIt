@@ -53,7 +53,7 @@ export default function AdminProductsPage() {
           <h1 className="mt-2 text-4xl font-black">Products</h1>
         </div>
         <Link
-          to="/admin/products/new"
+          to="/admin-panel/products/new"
           className="h-12 px-6 rounded-xl bg-black text-white font-semibold hover:bg-zinc-800 transition"
         >
           Add Product
@@ -134,7 +134,7 @@ export default function AdminProductsPage() {
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Link
-                          to={`/admin/products/${product.id}/edit`}
+                          to={`/admin-panel/products/${product.id}/edit`}
                           className="p-2 rounded-lg text-zinc-600 hover:bg-zinc-100 transition"
                           title="Edit"
                         >
@@ -172,7 +172,7 @@ export default function AdminProductsPage() {
             <div className="p-12 text-center text-zinc-500">
               <p>No products yet</p>
               <Link
-                to="/admin/products/new"
+                to="/admin-panel/products/new"
                 className="mt-4 inline-block text-black font-semibold hover:underline"
               >
                 Create your first product

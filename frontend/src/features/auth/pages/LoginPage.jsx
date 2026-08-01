@@ -54,7 +54,7 @@ login(
 );
 
 if (payload.role === "admin") {
-  navigate("/admin");
+  navigate("/admin-panel");
 } else {
   navigate(
   location.state?.from || "/"

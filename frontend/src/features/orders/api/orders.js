@@ -7,4 +7,4 @@ export const getOrderItems = (orderId) =>
   api.get(`/orders/${orderId}/items`);
 
 export const updateOrderStatus = (orderId, status) =>
-  api.patch(`/orders/${orderId}/status`, { status });
+  api.patch(`/orders/${orderId}/status`, status);

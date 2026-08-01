@@ -185,11 +185,11 @@ export default function ProductsPage() {
                 <>
   {isAdmin && (
     <Link
-      to="/admin/products/new"
+      to="/admin-panel/products/new"
       className="
         group
         flex
-        aspect-[3/4]
+        aspect-3/4
         flex-col
         items-center
         justify-center
@@ -221,11 +221,7 @@ export default function ProductsPage() {
 
       <p className="mt-6 text-lg font-semibold">
         Add Product
-      </p>
-
-      <p className="mt-2 text-sm text-zinc-500">
-        Create a new product
-      </p>
+      </p>    
     </Link>
   )}
 

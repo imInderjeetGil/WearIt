@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from models.order import Order, OrderItem
 from models.cart import CartItem
 from models.product import Product
@@ -25,12 +25,15 @@ def place_order(db: Session, user_id: int):
         if product.quantity < cart_item.quantity:
             raise HTTPException(status_code=400, detail=f"Not enough stock for {product.name}")
         
-        total += product.price * cart_item.quantity
+        selling_price = product.discount_price or product.price
+    
+        total += selling_price* cart_item.quantity
 
         order_items.append(OrderItem(
             product_id=product.id,
+            size_id=cart_item.size_id,
             quantity=cart_item.quantity,
-            price=product.price  # snapshot of current price
+            price=selling_price  # snapshot of current price
         ))
 
         # Deduct stock
@@ -58,7 +61,13 @@ def get_user_orders(db: Session, user_id: int):
 
 
 def get_all_orders(db: Session):
-    return db.query(Order).order_by(Order.created_at.desc()).all()
+    return db.query(Order).options(
+        selectinload(Order.user),
+        selectinload(Order.items)
+            .selectinload(OrderItem.product),
+        selectinload(Order.items)
+            .selectinload(OrderItem.size),
+    ).all()
 
 
 def get_order_items(db: Session, order_id: int):

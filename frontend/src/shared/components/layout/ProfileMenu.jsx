@@ -3,14 +3,15 @@ import {
   User,
   Package,
   LogOut,
+  LayoutDashboard,
   ChevronDown,
+  
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../features/auth/context/auth-context";
-
 export default function UserMenu() {
   const { user, logout } = useAuth();
-
+  const isAdmin = user?.role === "admin";
 function handleLogout() {
     logout();
 
@@ -80,14 +81,25 @@ function handleLogout() {
         </div>
 
         <MenuItem>
-          <Link
-            to="/orders"
-            className="mt-2 flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-zinc-100"
-          >
-            <Package size={18} />
-            My Orders
-          </Link>
-        </MenuItem>
+  {isAdmin ? (
+    <Link
+      to="/admin-panel"
+      className="mt-2 flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-zinc-100"
+    >
+      <LayoutDashboard size={18} />
+      Admin Panel
+    </Link>
+  ) : (
+    <Link
+      to="/orders"
+      className="mt-2 flex items-center gap-3 rounded-xl px-4 py-3 hover:bg-zinc-100"
+    >
+      <Package size={18} />
+      My Orders
+    </Link>
+  )}
+</MenuItem>
+
 
         <MenuItem>
           <Link

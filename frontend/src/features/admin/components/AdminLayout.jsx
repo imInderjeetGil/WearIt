@@ -11,22 +11,22 @@ const links = [
   {
     name: "Dashboard",
     icon: LayoutDashboard,
-    to: "/admin",
+    to: "/admin-panel",
   },
   {
     name: "Products",
     icon: Package,
-    to: "/admin/products",
+    to: "/admin-panel/products",
   },
   {
     name: "Categories",
     icon: Shapes,
-    to: "/admin/categories",
+    to: "/admin-panel/categories",
   },
   {
     name: "Orders",
     icon: ShoppingCart,
-    to: "/admin/orders",
+    to: "/admin-panel/orders",
   },
 ];
 
@@ -36,13 +36,18 @@ export default function AdminLayout() {
 
       <div className="grid lg:grid-cols-[260px_1fr]">
 
-        {/* Sidebar */}
+        {/* Desktop Sidebar */}
 
-        <aside className="flex
-    min-h-screen
-    flex-col
-    border-r bg-white">
-
+        <aside
+          className="
+            hidden
+            lg:flex
+            min-h-screen
+            flex-col
+            border-r
+            bg-white
+          "
+        >
           <div className="border-b p-6">
 
             <h1 className="text-2xl font-black">
@@ -57,65 +62,65 @@ export default function AdminLayout() {
 
           <nav className="space-y-2 p-4">
 
-  {links.map((link) => {
+            {links.map((link) => {
 
-    const Icon = link.icon;
+              const Icon = link.icon;
 
-    return (
-      <NavLink
-        key={link.to}
-        to={link.to}
-        end={link.to === "/admin"}
-        className={({ isActive }) =>
-          `
-          flex
-          items-center
-          gap-3
-          rounded-xl
-          px-4
-          py-3
-          transition
-          ${
-            isActive
-              ? "bg-black text-white"
-              : "hover:bg-zinc-100"
-          }
-        `
-        }
-      >
-        <Icon size={20} />
-        {link.name}
-      </NavLink>
-    );
+              return (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  end={link.to === "/admin-panel"}
+                  className={({ isActive }) =>
+                    `
+                    flex
+                    items-center
+                    gap-3
+                    rounded-xl
+                    px-4
+                    py-3
+                    transition
+                    ${
+                      isActive
+                        ? "bg-black text-white"
+                        : "hover:bg-zinc-100"
+                    }
+                  `
+                  }
+                >
+                  <Icon size={20} />
+                  {link.name}
+                </NavLink>
+              );
 
-  })}
+            })}
 
-  <div className="my-4 border-t" />
+            <div className="my-4 border-t" />
 
-  <NavLink
-    to="/"
-    className="
-      flex
-      items-center
-      gap-3
-      rounded-xl
-      px-4
-      py-3
-      transition
-      hover:bg-zinc-100
-    "
-  >
-    <Store size={20} />
-    Back to Store
-  </NavLink>
+            <NavLink
+              to="/"
+              className="
+                flex
+                items-center
+                gap-3
+                rounded-xl
+                px-4
+                py-3
+                transition
+                hover:bg-zinc-100
+              "
+            >
+              <Store size={20} />
+              Back to Store
+            </NavLink>
 
-</nav>
+          </nav>
 
         </aside>
 
-        {/* Content */}
+        {/* Dashboard */}
 
-        <main className="p-8">
+        <main className="p-4 lg:p-8">
 
           <Outlet />
 

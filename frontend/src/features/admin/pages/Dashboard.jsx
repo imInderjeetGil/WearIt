@@ -1,111 +1,178 @@
-import { useCallback, useEffect, useState } from "react";
-import { Package, ShoppingCart, Shapes, IndianRupee } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Package,
+  ShoppingCart,
+  IndianRupee,
+  TriangleAlert,
+} from "lucide-react";
 
 import { getProducts } from "../../catalog/api/products";
-import { getCategories } from "../../catalog/api/categories";
 import { getAllOrders } from "../../orders/api/orders";
 
+import DashboardHeader from "../components/DashboardHeader";
+import StatCard from "../components/StatCard";
+import SectionCard from "../components/SectionCard";
+import RecentOrderCard from "../components/RecentOrderCard";
+import InventoryAlert from "../components/InventoryAlert";
+
 export default function Dashboard() {
-  const [stats, setStats] = useState([
-    { title: "Products", value: 0, icon: Package },
-    { title: "Orders", value: 0, icon: ShoppingCart },
-    { title: "Categories", value: 0, icon: Shapes },
-    { title: "Revenue", value: "₹0", icon: IndianRupee },
-  ]);
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchStats = useCallback(async () => {
+  const fetchDashboard = useCallback(async () => {
     try {
-      const [{ data: products }, { data: categories }, { data: orders }] = await Promise.all([
-        getProducts({ limit: 100 }),
-        getCategories(),
-        getAllOrders(),
-      ]);
-      
-      const productList = Array.isArray(products) ? products : products.products || products.items || products.data || [];
-      const categoryList = Array.isArray(categories) ? categories : [];
-      const orderList = Array.isArray(orders) ? orders : [];
+      const [{ data: productsData }, { data: ordersData }] =
+        await Promise.all([
+          getProducts({ limit: 100 }),
+          getAllOrders(),
+        ]);
 
-      setStats([
-        { title: "Products", value: productList.length, icon: Package },
-        { title: "Orders", value: orderList.length, icon: ShoppingCart },
-        { title: "Categories", value: categoryList.length, icon: Shapes },
-        { title: "Revenue", value: orderList.reduce((sum, o) => sum + o.total_amount, 0), icon: IndianRupee },
-      ]);
-    } catch (err) {
-      console.error("Failed to load dashboard stats", err);
+      setProducts(
+        Array.isArray(productsData)
+          ? productsData
+          : productsData.products || []
+      );
+
+      setOrders(Array.isArray(ordersData) ? ordersData : []);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void fetchStats();
-  }, [fetchStats]);
+    void fetchDashboard();
+  }, [fetchDashboard]);
+
+  const revenue = useMemo(
+    () =>
+      orders.reduce(
+        (sum, order) => sum + order.total_amount,
+        0
+      ),
+    [orders]
+  );
+
+  const pendingOrders = useMemo(
+    () =>
+      orders.filter(
+        (order) => order.status === "pending"
+      ),
+    [orders]
+  );
+
+  const lowStockProducts = useMemo(
+    () =>
+      products.filter((p) => p.quantity <= 5),
+    [products]
+  );
+
+  const recentOrders = useMemo(
+    () =>
+      [...orders]
+        .sort(
+          (a, b) =>
+            new Date(b.created_at) -
+            new Date(a.created_at)
+        )
+        .slice(0, 5),
+    [orders]
+  );
 
   return (
     <>
-      <div className="mb-10">
-        <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">Admin</p>
-        <h1 className="mt-2 text-4xl font-black">Dashboard</h1>
+      <DashboardHeader />
+
+      <div className="grid gap-6 grid-cols-2 xl:grid-cols-4">
+
+        <StatCard
+          title="Products"
+          value={products.length}
+          subtitle="Active Products"
+          icon={Package}
+        />
+
+        <StatCard
+          title="Orders"
+          value={orders.length}
+          subtitle={`${pendingOrders.length} Pending`}
+          icon={ShoppingCart}
+        />
+
+        <StatCard
+          title="Revenue"
+          value={`₹${revenue.toLocaleString()}`}
+          subtitle="Total Revenue"
+          icon={IndianRupee}
+        />
+
+        <StatCard
+          title="Low Stock"
+          value={lowStockProducts.length}
+          subtitle="Need Attention"
+          icon={TriangleAlert}
+        />
+
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          const displayValue = stat.title === "Revenue" 
-            ? `₹${stat.value.toLocaleString()}` 
-            : stat.value;
-          
-          return (
-            <div
-              key={stat.title}
-              className={`
-                rounded-2xl border bg-white p-6 shadow-sm transition
-                ${loading ? "animate-pulse" : ""}
-              `}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-zinc-500">{stat.title}</p>
-                  <h2 className="mt-3 text-4xl font-black">{displayValue}</h2>
-                </div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-black text-white">
-                  <Icon size={26} />
-                </div>
-              </div>
+      <div className="mt-8 grid gap-6 xl:grid-cols-[2fr_1fr]">
+
+        <SectionCard title="Recent Orders">
+
+          {loading ? (
+
+            <p className="text-zinc-500">
+              Loading...
+            </p>
+
+          ) : recentOrders.length ? (
+
+            recentOrders.map((order) => (
+              <RecentOrderCard
+                key={order.id}
+                order={order}
+              />
+            ))
+
+          ) : (
+
+            <p className="text-zinc-500">
+              No orders yet.
+            </p>
+
+          )}
+
+        </SectionCard>
+
+        <SectionCard title="Inventory Alerts">
+
+          {lowStockProducts.length ? (
+
+            lowStockProducts.map((product) => (
+              <InventoryAlert
+                key={product.id}
+                product={product}
+              />
+            ))
+
+          ) : (
+
+            <div className="rounded-2xl border border-green-200 bg-green-50 p-6 text-center">
+
+              <h3 className="font-semibold text-green-700">
+                Inventory Healthy ✅
+              </h3>
+
+              <p className="mt-2 text-sm text-green-600">
+                No products require restocking.
+              </p>
+
             </div>
-          );
-        })}
-      </div>
 
-      <div className="mt-10 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border bg-white p-6">
-          <h2 className="text-xl font-bold">Quick Actions</h2>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <a href="/admin/products/new" className="p-4 rounded-xl border hover:bg-zinc-50 transition text-left">
-              <p className="font-semibold">Add Product</p>
-              <p className="text-sm text-zinc-500 mt-1">Create a new product listing</p>
-            </a>
-            <a href="/admin/categories" className="p-4 rounded-xl border hover:bg-zinc-50 transition text-left">
-              <p className="font-semibold">Manage Categories</p>
-              <p className="text-sm text-zinc-500 mt-1">Add or edit categories</p>
-            </a>
-            <a href="/admin/orders" className="p-4 rounded-xl border hover:bg-zinc-50 transition text-left">
-              <p className="font-semibold">View Orders</p>
-              <p className="text-sm text-zinc-500 mt-1">Manage customer orders</p>
-            </a>
-            <a href="/admin/products" className="p-4 rounded-xl border hover:bg-zinc-50 transition text-left">
-              <p className="font-semibold">All Products</p>
-              <p className="text-sm text-zinc-500 mt-1">View and manage inventory</p>
-            </a>
-          </div>
-        </div>
+          )}
 
-        <div className="rounded-2xl border bg-white p-6">
-          <h2 className="text-xl font-bold">Recent Orders</h2>
-          <p className="mt-4 text-zinc-500">Recent orders will appear here once customers start ordering.</p>
-        </div>
+        </SectionCard>
+
       </div>
     </>
   );

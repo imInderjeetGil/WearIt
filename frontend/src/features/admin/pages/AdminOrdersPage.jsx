@@ -21,21 +21,17 @@ export default function AdminOrdersPage() {
   const [updatingId, setUpdatingId] = useState(null);
 
   const fetchOrders = useCallback(async () => {
-    try {
-      const { data } = await getAllOrders();
-      const ordersWithItems = await Promise.all(
-        data.map(async (order) => {
-          const { data: items } = await getOrderItems(order.id);
-          return { ...order, items };
-        })
-      );
-      setOrders(ordersWithItems);
-    } catch (err) {
-      toast.error("Failed to load orders");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  try {
+    const { data } = await getAllOrders();
+
+    setOrders(data);
+
+  } catch (err) {
+    toast.error("Failed to load orders");
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   useEffect(() => {
     void fetchOrders();
@@ -123,7 +119,7 @@ export default function AdminOrdersPage() {
                       {order.user?.name || "Customer"} &middot;₹{order.total_amount}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="flex items-center gap-3 shrink-0">
                     <span className="text-zinc-500 text-sm whitespace-nowrap">
                       {new Date(order.created_at).toLocaleDateString()}
                     </span>
@@ -179,9 +175,13 @@ export default function AdminOrdersPage() {
                               <p className="font-medium truncate">
                                 {item.product?.name || "Unknown Product"}
                               </p>
-                              <p className="text-sm text-zinc-500">
-                                Qty: {item.quantity} &times; ₹{item.price}
-                              </p>
+                             <p className="text-sm text-zinc-500">
+    Size: <span className="font-medium">{item.size?.name}</span>
+</p>
+
+<p className="text-sm text-zinc-500">
+    Qty: {item.quantity} × ₹{item.price}
+</p>
                             </div>
                             <span className="font-semibold text-zinc-900">
                               ₹{item.price * item.quantity}
