@@ -8,7 +8,7 @@ from models.user import User
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
 
-@router.post("/", response_model=OrderResponse)
+@router.post("", response_model=OrderResponse)
 def place_order(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return order_service.place_order(db, current_user.id)
 
@@ -27,6 +27,34 @@ def all_orders(db: Session = Depends(get_db), current_user: User = Depends(get_a
     for order in orders:
         order.items = order_service.get_order_items(db, order.id)
     return orders
+
+
+@router.post("/{order_id}/cancel", response_model=OrderResponse)
+def cancel_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    is_admin = current_user.role == "admin"
+    return order_service.cancel_order(db, current_user.id, order_id, is_admin=is_admin)
+
+
+@router.post("/{order_id}/cancel-request", response_model=OrderResponse)
+def request_cancellation(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return order_service.request_cancellation(db, current_user.id, order_id)
+
+
+@router.post("/{order_id}/cancel-request/reject", response_model=OrderResponse)
+def reject_cancel_request(
+    order_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_admin_user),
+):
+    return order_service.reject_cancel_request(db, order_id)
 
 
 @router.patch("/{order_id}/status", response_model=OrderResponse)

@@ -31,7 +31,7 @@ export default function Dashboard() {
       setProducts(
         Array.isArray(productsData)
           ? productsData
-          : productsData.products || []
+          : productsData.items || productsData.products || []
       );
 
       setOrders(Array.isArray(ordersData) ? ordersData : []);

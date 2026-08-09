@@ -1,9 +1,12 @@
 // src/pages/OrderSuccess.jsx
 
 import { CheckCircle2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export default function OrderSuccess() {
+  const location = useLocation();
+  const orderId = location.state?.orderId;
+
   return (
     <section className="flex min-h-[80vh] items-center justify-center px-4">
 
@@ -21,7 +24,14 @@ export default function OrderSuccess() {
         <p className="mt-4 text-zinc-500 leading-7">
           Thank you for shopping with WearIt.
           <br />
-          Your order has been placed successfully.
+          {orderId ? (
+            <>
+              Order <span className="font-semibold text-black">#{orderId}</span>{" "}
+              has been paid successfully.
+            </>
+          ) : (
+            "Your order has been placed successfully."
+          )}
         </p>
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row">

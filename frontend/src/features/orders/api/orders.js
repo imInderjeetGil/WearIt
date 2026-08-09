@@ -8,3 +8,9 @@ export const getOrderItems = (orderId) =>
 
 export const updateOrderStatus = (orderId, status) =>
   api.patch(`/orders/${orderId}/status`, status);
+
+export const cancelOrder = (orderId) =>
+  api.post(`/orders/${orderId}/cancel`);
+
+export const rejectCancellation = (orderId) =>
+  api.post(`/orders/${orderId}/cancel-request/reject`);

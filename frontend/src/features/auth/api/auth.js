@@ -9,8 +9,7 @@ export const registerUser = (data) =>
   api.post("/auth/register", data);
 
 export const logoutUser = () => {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("user");
+  localStorage.clear();
 };
 
 export const saveToken = (token) => {

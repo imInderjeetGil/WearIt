@@ -17,7 +17,7 @@ router = APIRouter(
 
 
 
-@router.get("/", response_model=list[SizeResponse])
+@router.get("", response_model=list[SizeResponse])
 def get_sizes(db: Session = Depends(get_db)):
     return size_service.get_sizes(db)
 
@@ -38,7 +38,7 @@ def get_size(
     return size
 
 
-@router.post("/", response_model=SizeResponse)
+@router.post("", response_model=SizeResponse)
 def create_size(
     size: SizeCreate,
     db: Session = Depends(get_db),

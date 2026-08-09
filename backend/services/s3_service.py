@@ -11,10 +11,10 @@ s3_client = boto3.client(
 BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
 REGION = os.getenv("AWS_REGION")
 
-def upload_image(file_bytes: bytes, filename: str, content_type: str) -> str:
+def upload_image(file_bytes: bytes, filename: str, content_type: str, folder: str = "products") -> str:
     ext = filename.split(".")[-1]
-    unique_name = f"products/{uuid.uuid4()}.{ext}"
-    
+    unique_name = f"{folder}/{uuid.uuid4()}.{ext}"
+
     s3_client.put_object(
         Bucket=BUCKET_NAME,
         Key=unique_name,

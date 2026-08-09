@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from db.base import Base
@@ -10,6 +10,15 @@ class Order(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     total_amount = Column(Float)
     status = Column(String, default="pending")
+    payment_status = Column(String, default="pending", server_default="pending", nullable=False)
+    cancel_requested = Column(Boolean, default=False, server_default="false", nullable=False)
+
+    full_name = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    address = Column(String, nullable=True)
+    city = Column(String, nullable=True)
+    pincode = Column(String, nullable=True)
+
     created_at = Column(DateTime, server_default=func.now())
     user = relationship("User")
     items = relationship(

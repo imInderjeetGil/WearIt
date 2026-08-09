@@ -5,3 +5,9 @@ export const placeOrder = (data) =>
 
 export const getOrders = () =>
   api.get("/orders/my-orders");
+
+export const cancelOrder = (orderId) =>
+  api.post(`/orders/${orderId}/cancel`);
+
+export const requestCancellation = (orderId) =>
+  api.post(`/orders/${orderId}/cancel-request`);

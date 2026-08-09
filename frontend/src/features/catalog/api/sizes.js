@@ -4,7 +4,7 @@ export const getSizes = () =>
   api.get("/sizes");
 
 export const createSize = (data) =>
-  api.post("/sizes/", data);
+  api.post("/sizes", data);
 
 export const updateSize = (id, data) =>
   api.put(`/sizes/${id}`, data);

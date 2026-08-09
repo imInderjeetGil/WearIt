@@ -5,6 +5,7 @@ import {
   getCart,
   addToCart,
   removeFromCart,
+  updateCartItem,
 } from "../api/cart";
 import { getSubtotal } from "../../../shared/utils/pricing";
 const useCartStore = create((set, get) => ({
@@ -46,6 +47,24 @@ const useCartStore = create((set, get) => ({
       set({
         items: get().items.filter(
           (item) => item.id !== cartItemId
+        ),
+      });
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
+
+  updateItem: async (cartItemId, quantity) => {
+    try {
+      const { data } = await updateCartItem(
+        cartItemId,
+        quantity
+      );
+
+      set({
+        items: get().items.map((item) =>
+          item.id === cartItemId ? data : item
         ),
       });
     } catch (err) {

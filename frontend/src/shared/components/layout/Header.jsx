@@ -1,7 +1,6 @@
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
 import { useAuth } from "../../../features/auth/context/auth-context";
 
 import Container from "./Container";
@@ -13,8 +12,8 @@ import ProfileMenu from "./ProfileMenu";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
-
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   return (
     <>
@@ -66,11 +65,8 @@ export default function Header() {
               ) : (
                 <ProfileMenu />
               )}
-
-              <CartButton />
-
+              {!isAdmin ? <CartButton /> : null}
             </div>
-
           </div>
 
         </Container>

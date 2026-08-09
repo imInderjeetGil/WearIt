@@ -5,6 +5,7 @@ from core.dependencies import get_current_user, get_db
 from models.user import User
 from models.order import Order
 from services import order_service
+from schemas.order import OrderShipping
 from schemas.payment import PaymentVerification
 import razorpay
 import os
@@ -19,24 +20,23 @@ client = razorpay.Client(auth=(
 ))
 
 @router.post("/create-order")
-def create_payment_order(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    
-        existing_order = db.query(Order).filter(
-        Order.user_id == current_user.id,
-        Order.status == "pending"
-    ).first()
-        
-        if existing_order:
-            order = existing_order
-        else:
-            order = order_service.place_order(db, current_user.id)
-    
+def create_payment_order(
+    shipping: OrderShipping | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+        # Drop any stale pending order (abandoned payment) and restore its stock
+        order_service.release_pending_orders(db, current_user.id)
+
+        # Place a fresh order from the current cart, snapshotting the shipping address
+        order = order_service.place_order(db, current_user.id, shipping)
+
         razorpay_order = client.order.create({
             "amount": int(order.total_amount*100), # razorpay uses paise
             "currency": "INR",
             "receipt": f"order_{order.id}"
         })
-        
+
         return {
             "razorpay_order_id": razorpay_order["id"],
             "amount": razorpay_order["amount"],
@@ -69,11 +69,11 @@ def verify_payments(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    if order.status != "pending":
+    if order.payment_status != "pending":
         raise HTTPException(status_code=400, detail="Order has already been processed")
-    
-    order.status = "paid"
-  
+
+    order.payment_status = "paid"
+
     db.query(CartItem).filter(CartItem.user_id == current_user.id).delete()
     db.commit()
     

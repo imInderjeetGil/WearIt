@@ -1,11 +1,61 @@
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { getWishlistIds, toggleWishlist } from "../../../wishlist/api/wishlist";
 
 export default function ProductCard({ product }) {
   const hasDiscount =
     product.discount_price &&
     product.discount_price < product.price;
+  const [wishlisted, setWishlisted] = useState(false);
 
+  useEffect(() => {
+    async function load() {
+        try {
+            const { data } =
+                await getWishlistIds();
+            setWishlisted(
+                data.includes(product.id)
+            );
+        }
+        catch {}
+    }
+    load();
+}, [product.id]);
+
+async function handleWishlist(e) {
+
+    e.preventDefault();
+
+    e.stopPropagation();
+
+    const previous = wishlisted;
+
+    setWishlisted(!previous);
+
+    try {
+
+        const { data } =
+            await toggleWishlist(product.id);
+
+        setWishlisted(
+            data.wishlisted
+        );
+
+    }
+
+    catch (err) {
+  console.log(err);
+  console.log(err.response);
+  console.log(err.response?.data);
+
+  setWishlisted(previous);
+
+  toast.error("Something went wrong");
+}
+
+}
   return (
     <Link
       to={`/products/${product.id}`}
@@ -31,7 +81,7 @@ export default function ProductCard({ product }) {
         {/* Wishlist */}
 
         <button
-          onClick={(e) => e.preventDefault()}
+          onClick={handleWishlist}
           className="
             absolute
             right-3
@@ -49,9 +99,22 @@ export default function ProductCard({ product }) {
           "
         >
           <Heart
-            size={18}
-            className="text-zinc-700"
-          />
+
+size={18}
+
+fill={
+    wishlisted
+        ? "currentColor"
+        : "none"
+}
+
+className={
+    wishlisted
+        ? "text-red-500"
+        : "text-zinc-500"
+}
+
+/>
         </button>
 
         {/* Discount */}

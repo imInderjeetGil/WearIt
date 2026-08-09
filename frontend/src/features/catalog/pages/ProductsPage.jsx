@@ -30,8 +30,15 @@ export default function ProductsPage() {
   const [categoryId, setCategoryId] = useState(null);
 
   const [sizeId, setSizeId] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+
+  // Reset to the first page whenever a filter/search/sort changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, sort, minPrice, maxPrice, categoryId, sizeId]);
 
 
   const clearFilters = () => {
@@ -49,7 +56,7 @@ export default function ProductsPage() {
       setLoading(true);
 
       const { data } = await getProducts({
-        page: 1,
+        page,
         limit: 12,
         search,
         sort,
@@ -61,15 +68,16 @@ export default function ProductsPage() {
 
       const list = Array.isArray(data)
         ? data
-        : data.products || data.items || data.data || [];
+        : data.items || data.products || data.data || [];
 
       setProducts(list);
+      setTotalPages(data.pages || 1);
     } catch (err) {
       console.log(err);
     } finally {
       setLoading(false);
     }
-  }, [search, sort, minPrice, maxPrice, categoryId, sizeId]);
+  }, [page, search, sort, minPrice, maxPrice, categoryId, sizeId]);
 
   useEffect(() => {
     void fetchProducts();
@@ -235,6 +243,28 @@ export default function ProductsPage() {
 
               </div>
 
+            )}
+
+            {!loading && totalPages > 1 && (
+              <div className="mt-10 flex items-center justify-center gap-4">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="h-11 px-5 rounded-xl border font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
+                >
+                  Prev
+                </button>
+                <span className="text-sm text-zinc-500">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="h-11 px-5 rounded-xl border font-medium disabled:opacity-40 hover:bg-zinc-50 transition"
+                >
+                  Next
+                </button>
+              </div>
             )}
 
           </section>

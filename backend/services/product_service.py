@@ -1,7 +1,9 @@
-from fastapi import HTTPException
+import math
 import re
 
-from sqlalchemy import desc, or_
+from fastapi import HTTPException
+
+from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session, selectinload
 
 from models.product import Product
@@ -9,6 +11,7 @@ from models.product_size import ProductSize
 
 from models.category import Category
 
+from models.review import Review
 from models.size import Size
 from schemas.product import ProductCreate, ProductUpdate
 
@@ -48,6 +51,35 @@ def _validate_relations(
             raise HTTPException(status_code=404, detail=f"{label.title()} not found")
 
 
+def _attach_ratings(db: Session, products: list[Product]) -> None:
+    """Attach rating_average / rating_count as transient attrs on Product objects."""
+    if not products:
+        return
+
+    ids = [p.id for p in products]
+
+    rows = (
+        db.query(
+            Review.product_id,
+            func.avg(Review.rating),
+            func.count(Review.id),
+        )
+        .filter(Review.product_id.in_(ids))
+        .group_by(Review.product_id)
+        .all()
+    )
+
+    rating_map = {
+        product_id: (avg, count)
+        for product_id, avg, count in rows
+    }
+
+    for product in products:
+        avg, count = rating_map.get(product.id, (None, 0))
+        product.rating_average = float(round(avg, 2)) if avg is not None else None
+        product.rating_count = count or 0
+
+
 def get_products(
     db: Session,
     page: int,
@@ -59,16 +91,16 @@ def get_products(
     category_id=None,
     size_id=None,
 ):
-    
+
     query = (
-    db.query(Product)
-    .options(
-    selectinload(Product.category),
-    selectinload(Product.sizes).selectinload(ProductSize.size),
-)
-)
-    
-    #Sorting logic
+        db.query(Product)
+        .options(
+            selectinload(Product.category),
+            selectinload(Product.sizes).selectinload(ProductSize.size),
+        )
+    )
+
+    # Sorting logic
     if sort:
         if sort.startswith("-"):
             field = sort[1:]
@@ -85,38 +117,54 @@ def get_products(
                 query = query.order_by(Product.name)
             elif sort == "created_at":
                 query = query.order_by(Product.created_at)
-    
+
     # Searching logic
     if search is not None:
         query = query.filter(
-    or_(
-        Product.name.ilike(f"%{search}%"),
-        Product.description.ilike(f"%{search}%")
-    )
-)
-     # Price filter logic
+            or_(
+                Product.name.ilike(f"%{search}%"),
+                Product.description.ilike(f"%{search}%")
+            )
+        )
+
+    # Price filter logic
     if min_price is not None:
         query = query.filter(Product.price >= min_price)
     if max_price is not None:
         query = query.filter(Product.price <= max_price)
-        
-    # Pagination
-    offset = (page - 1) * limit
-    
+
+    # Category filter
     if category_id:
         query = query.filter(Product.category_id == category_id)
 
+    # Size filter
     if size_id:
         query = query.join(ProductSize).filter(
-        ProductSize.size_id == size_id
-    )
-    
+            ProductSize.size_id == size_id
+        )
+
     query = query.distinct()
-    return query.offset(offset).limit(limit).all()
-    
+
+    total = query.count()
+
+    pages = max(math.ceil(total / limit) if total else 0, 1)
+
+    offset = (page - 1) * limit
+    products = query.offset(offset).limit(limit).all()
+
+    _attach_ratings(db, products)
+
+    return {
+        "items": products,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": pages,
+    }
+
 
 def get_product(db: Session, product_id: int):
-    return (
+    product = (
         db.query(Product)
         .options(
             selectinload(Product.category),
@@ -125,6 +173,11 @@ def get_product(db: Session, product_id: int):
         .filter(Product.id == product_id)
         .first()
     )
+
+    if product:
+        _attach_ratings(db, [product])
+
+    return product
 
 def create_product(db: Session, product: ProductCreate):
     product_data = product.model_dump()

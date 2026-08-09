@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, File, Query, UploadFile
 from sqlalchemy.orm import Session
-from schemas.product import ProductCreate, ProductResponse, ProductUpdate
+from schemas.product import ProductCreate, ProductListResponse, ProductResponse, ProductUpdate
 from services import product_service
 from core.dependencies import get_admin_user, get_db
 from models.user import User
@@ -8,7 +8,7 @@ from services.s3_service import upload_image
 
 router = APIRouter(prefix="/products", tags=["Products"])
 
-@router.get("/", response_model=list[ProductResponse])
+@router.get("", response_model=ProductListResponse)
 def get_products(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=10, ge=1, le=100),
@@ -31,7 +31,7 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     return product
 
 
-@router.post("/", response_model=ProductResponse)
+@router.post("", response_model=ProductResponse)
 def create_product(product: ProductCreate, db: Session = Depends(get_db), _: User = Depends(get_admin_user)):
     return product_service.create_product(db, product)
 

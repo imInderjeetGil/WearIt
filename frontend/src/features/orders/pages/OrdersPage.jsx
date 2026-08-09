@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Package } from "lucide-react";
-import { getOrders } from "../api/order";
+import { getOrders, requestCancellation } from "../api/order";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
@@ -30,6 +31,26 @@ export default function OrdersPage() {
   useEffect(() => {
     void fetchOrders();
   }, [fetchOrders]);
+
+  async function handleCancelRequest(orderId) {
+    if (
+      !window.confirm(
+        "Request cancellation? Admin will review and approve it."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await requestCancellation(orderId);
+      toast.success("Cancellation requested. Awaiting admin approval.");
+      void fetchOrders();
+    } catch (err) {
+      toast.error(
+        err.response?.data?.detail ?? "Failed to request cancellation."
+      );
+    }
+  }
 
   if (loading) {
     return (
@@ -73,7 +94,7 @@ export default function OrdersPage() {
 
           <div
             key={order.id}
-            className="rounded-2xl border p-4 sm:p-6"
+            className="rounded-2xl bg-white shadow-lg transition hover:shadow-lg p-4 sm:p-6"
           >
 
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -92,7 +113,9 @@ export default function OrdersPage() {
 
               </div>
 
-              <span
+              <div className="flex flex-wrap items-center gap-2">
+
+                <span
   className={`rounded-full px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium ${
     statusStyles[order.status] ??
     "bg-zinc-100 text-zinc-700"
@@ -100,6 +123,38 @@ export default function OrdersPage() {
 >
   {order.status}
 </span>
+
+                {order.cancel_requested && (
+                  <span className="rounded-full bg-amber-100 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-amber-700">
+                    Cancellation Requested
+                  </span>
+                )}
+
+                {!order.cancel_requested &&
+                  (order.status === "pending" || order.status === "processing") && (
+                  <button
+                    onClick={() => handleCancelRequest(order.id)}
+                    className="
+                      rounded-full
+                      border
+                      border-red-200
+                      px-3
+                      sm:px-4
+                      py-1.5
+                      sm:py-2
+                      text-xs
+                      sm:text-sm
+                      font-medium
+                      text-red-600
+                      transition
+                      hover:bg-red-50
+                    "
+                  >
+                    Request Cancellation
+                  </button>
+                )}
+
+              </div>
 
             </div>
 
@@ -109,7 +164,7 @@ export default function OrdersPage() {
 
   <div
     key={item.id}
-    className="flex flex-col sm:flex-row gap-3 sm:gap-4 rounded-xl border p-3.5 sm:p-4"
+    className="flex flex-col sm:flex-row gap-3 sm:gap-4 rounded-xl shadow p-3.5 sm:p-4 "
   >
 
     <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
@@ -118,7 +173,7 @@ export default function OrdersPage() {
         <img
           src={item.product.image_url}
           alt={item.product.name}
-          className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl object-cover"
+          className="h-20 w-20 sm:h-24 sm:w-24 rounded-xl shadow object-cover"
         />
 
       </Link>
@@ -169,7 +224,7 @@ export default function OrdersPage() {
 
             </div>
 
-            <hr className="my-6" />
+            <hr class=" my-6 border-t-2 border-gray-300" />
 
             <div className="flex justify-between text-lg font-bold">
 

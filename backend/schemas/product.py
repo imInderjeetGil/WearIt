@@ -58,11 +58,21 @@ class ProductResponse(ProductBase):
     category: CategoryResponse | None = None
 
     sizes: list[ProductSizeResponse] = []
-    
+
     image_url: str | None = None
+
+    rating_average: float | None = None
+    rating_count: int = 0
 
     class Config:
         from_attributes = True
+
+class ProductListResponse(BaseModel):
+    items: list[ProductResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
 
 class ProductSummary(BaseModel):
     id: int

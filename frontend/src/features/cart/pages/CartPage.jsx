@@ -14,6 +14,7 @@ export default function CartPage() {
     loading,
     fetchCart,
     removeItem,
+    updateItem,
     subtotal,
   } = useCartStore();
 
@@ -99,9 +100,36 @@ export default function CartPage() {
                     Size : {item.size.name}
                   </p>
 
-                  <p className="mt-1 text-sm text-zinc-500">
-                    Qty : {item.quantity}
-                  </p>
+                  <div className="mt-3 flex w-fit items-center rounded-lg border">
+                    <button
+                      onClick={() => {
+                        void updateItem(item.id, item.quantity - 1).catch(() => {
+                          toast.error("Unable to update quantity.");
+                        });
+                      }}
+                      disabled={item.quantity <= 1}
+                      className="w-9 h-9 disabled:opacity-40"
+                    >
+                      −
+                    </button>
+                    <span className="w-10 text-center text-sm">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => {
+                        void updateItem(item.id, item.quantity + 1).catch((err) => {
+                          toast.error(
+                            err.response?.data?.detail ??
+                              "Unable to update quantity."
+                          );
+                        });
+                      }}
+                      disabled={item.quantity >= item.product.quantity}
+                      className="w-9 h-9 disabled:opacity-40"
+                    >
+                      +
+                    </button>
+                  </div>
 
                 </div>
 

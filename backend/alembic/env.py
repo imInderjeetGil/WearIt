@@ -17,10 +17,18 @@ import models.size
 import models.product_size
 import models.cart
 import models.order
+import models.review
+import models.user_profile
+import models.wishlist
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Allow DATABASE_URL env var to override the URL in alembic.ini
+# (used to autogenerate against a throwaway database).
+if os.getenv("DATABASE_URL"):
+    config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

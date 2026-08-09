@@ -40,6 +40,25 @@ def add_to_cart(db: Session, user_id: int, item: CartItemAdd):
     db.refresh(cart_item)
     return cart_item
 
+def update_cart_item(db: Session, user_id: int, cart_item_id: int, quantity: int):
+    item = db.query(CartItem).filter(
+        CartItem.id == cart_item_id,
+        CartItem.user_id == user_id,
+    ).first()
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Cart item not found")
+
+    product = db.query(Product).filter(Product.id == item.product_id).first()
+
+    if quantity > product.quantity:
+        raise HTTPException(status_code=400, detail="Requested quantity is not available")
+
+    item.quantity = quantity
+    db.commit()
+    db.refresh(item)
+    return item
+
 def remove_from_cart(db: Session, user_id: int, cart_item_id: int):
     item = db.query(CartItem).filter(
         CartItem.id == cart_item_id,

@@ -27,6 +27,9 @@ import ProductForm from "../features/admin/pages/ProductForm";
 import AdminProductsPage from "../features/admin/pages/AdminProductsPage";
 import AdminCategoriesPage from "../features/admin/pages/AdminCategoriesPage";
 import AdminOrdersPage from "../features/admin/pages/AdminOrdersPage";
+import ProfilePage from "../features/profile/pages/ProfilePage";
+import WishlistPage from "../features/wishlist/pages/WishlistPage";
+
 
 export default function App() {
   return (
@@ -123,7 +126,22 @@ export default function App() {
             element={<AdminOrdersPage />}
           />
         </Route>
+        <Route
+          path="/profile"
+          element={<ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>}
+        />
 
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <WishlistPage />
+            </ProtectedRoute>
+          }
+
+        />
       </Routes>
 
       <Footer />
