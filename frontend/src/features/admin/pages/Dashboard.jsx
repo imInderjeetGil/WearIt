@@ -18,6 +18,7 @@ import InventoryAlert from "../components/InventoryAlert";
 export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [orderSummary, setOrderSummary] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboard = useCallback(async () => {
@@ -25,7 +26,7 @@ export default function Dashboard() {
       const [{ data: productsData }, { data: ordersData }] =
         await Promise.all([
           getProducts({ limit: 100 }),
-          getAllOrders(),
+          getAllOrders({ limit: 100 }),
         ]);
 
       setProducts(
@@ -34,7 +35,15 @@ export default function Dashboard() {
           : productsData.items || productsData.products || []
       );
 
-      setOrders(Array.isArray(ordersData) ? ordersData : []);
+      setOrders(
+        Array.isArray(ordersData)
+          ? ordersData
+          : ordersData.items || []
+      );
+
+      setOrderSummary(
+        Array.isArray(ordersData) ? null : ordersData.summary || null
+      );
     } finally {
       setLoading(false);
     }
@@ -94,8 +103,8 @@ export default function Dashboard() {
 
         <StatCard
           title="Orders"
-          value={orders.length}
-          subtitle={`${pendingOrders.length} Pending`}
+          value={orderSummary?.total ?? orders.length}
+          subtitle={`${orderSummary?.pending ?? pendingOrders.length} Pending`}
           icon={ShoppingCart}
         />
 

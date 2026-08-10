@@ -1,6 +1,7 @@
 from pydantic import AliasChoices, BaseModel, Field, ConfigDict
 
 from schemas.category import CategoryResponse
+from schemas.product_metadata import ProductMetadataInput, ProductMetadataResponse
 from schemas.product_size import ProductSizeResponse
 
 
@@ -27,6 +28,7 @@ class ProductBase(BaseModel):
 
 class ProductCreate(ProductBase):
     sizes: list[int] = []
+    product_metadata: ProductMetadataInput | None = None
 
 
 class ProductUpdate(BaseModel):
@@ -51,6 +53,8 @@ class ProductUpdate(BaseModel):
 
     sizes: list[int] | None = None
 
+    product_metadata: ProductMetadataInput | None = None
+
 
 class ProductResponse(ProductBase):
     id: int
@@ -58,6 +62,8 @@ class ProductResponse(ProductBase):
     category: CategoryResponse | None = None
 
     sizes: list[ProductSizeResponse] = []
+
+    product_metadata: ProductMetadataResponse | None = None
 
     image_url: str | None = None
 

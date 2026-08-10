@@ -7,6 +7,7 @@ from sqlalchemy import desc, func, or_
 from sqlalchemy.orm import Session, selectinload
 
 from models.product import Product
+from models.product_metadata import ProductMetadata
 from models.product_size import ProductSize
 
 from models.category import Category
@@ -49,6 +50,38 @@ def _validate_relations(
         missing_ids = set(ids) - existing_ids
         if missing_ids:
             raise HTTPException(status_code=404, detail=f"{label.title()} not found")
+
+
+def _upsert_product_metadata(
+    db: Session,
+    product_id: int,
+    metadata: dict | None,
+) -> None:
+    """Create-or-update the 1:1 product_metadata row from a dumped dict.
+
+    Fields already None are written as-is (so an edit form that resubmits a
+    full form clears a field the admin un-selected), but an all-None payload
+    creates nothing.
+    """
+    if not metadata:
+        return
+
+    if not any(value is not None for value in metadata.values()):
+        return
+
+    row = (
+        db.query(ProductMetadata)
+        .filter(ProductMetadata.product_id == product_id)
+        .first()
+    )
+
+    if row is None:
+        db.add(ProductMetadata(product_id=product_id, **metadata))
+    else:
+        for key, value in metadata.items():
+            setattr(row, key, value)
+
+    db.flush()
 
 
 def _attach_ratings(db: Session, products: list[Product]) -> None:
@@ -97,6 +130,7 @@ def get_products(
         .options(
             selectinload(Product.category),
             selectinload(Product.sizes).selectinload(ProductSize.size),
+            selectinload(Product.product_metadata),
         )
     )
 
@@ -169,6 +203,7 @@ def get_product(db: Session, product_id: int):
         .options(
             selectinload(Product.category),
             selectinload(Product.sizes).selectinload(ProductSize.size),
+            selectinload(Product.product_metadata),
         )
         .filter(Product.id == product_id)
         .first()
@@ -183,6 +218,7 @@ def create_product(db: Session, product: ProductCreate):
     product_data = product.model_dump()
 
     sizes = product_data.pop("sizes", [])
+    metadata_data = product_data.pop("product_metadata", None)
     _validate_relations(db, product_data.get("category_id"), sizes)
     product_data["slug"] = _unique_slug(
         db,
@@ -193,7 +229,9 @@ def create_product(db: Session, product: ProductCreate):
 
     db.add(db_product)
     db.flush()
-    
+
+    _upsert_product_metadata(db, db_product.id, metadata_data)
+
     for size_id in sizes:
         db.add(
         ProductSize(
@@ -221,6 +259,7 @@ def update_product(
     product_data = product.model_dump(exclude_unset=True)
 
     sizes = product_data.pop("sizes", None)
+    metadata_data = product_data.pop("product_metadata", None)
 
     _validate_relations(
         db,
@@ -245,6 +284,8 @@ def update_product(
         db.query(ProductSize).filter(ProductSize.product_id == product_id).delete()
         for size_id in sizes:
             db.add(ProductSize(product_id=product_id, size_id=size_id, stock=0))
+
+    _upsert_product_metadata(db, product_id, metadata_data)
 
     db.commit()
     db.refresh(db_product)

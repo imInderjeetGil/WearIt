@@ -161,7 +161,7 @@ export default function ProfilePage() {
           <input
             ref={photoInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp"
             onChange={handlePhotoUpload}
             className="hidden"
             disabled={uploadingPhoto}
@@ -234,7 +234,9 @@ export default function ProfilePage() {
               onChange={(e) =>
                 updateField(
                   "height_cm",
-                  Number(e.target.value)
+                  e.target.value === ""
+                    ? null
+                    : Number(e.target.value)
                 )
               }
             />

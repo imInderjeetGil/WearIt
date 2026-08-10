@@ -29,6 +29,8 @@ class OrderResponse(BaseModel):
     status: str
     payment_status: str = "pending"
     cancel_requested: bool = False
+    customer_name: str | None = None
+    customer_email: str | None = None
     full_name: str | None = None
     phone: str | None = None
     address: str | None = None
@@ -38,6 +40,22 @@ class OrderResponse(BaseModel):
     items: list[OrderItemResponse]=[]
 
     model_config = ConfigDict(from_attributes=True)
+
+class OrderSummary(BaseModel):
+    total: int
+    pending: int
+    processing: int
+    shipped: int
+    delivered: int
+    cancelled: int
+
+class OrderListResponse(BaseModel):
+    items: list[OrderResponse]
+    total: int
+    page: int
+    limit: int
+    pages: int
+    summary: OrderSummary
 
 class OrderUpdate(BaseModel):
     status: str

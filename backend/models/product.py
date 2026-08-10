@@ -64,3 +64,10 @@ class Product(Base):
         back_populates="product",
         cascade="all, delete-orphan",
     )
+
+    product_metadata = relationship(
+        "ProductMetadata",
+        back_populates="product",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )

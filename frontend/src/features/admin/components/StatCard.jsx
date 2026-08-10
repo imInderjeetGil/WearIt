@@ -68,37 +68,6 @@ export default function StatCard({
         </div>
 
       </div>
-
-      <div
-        className="
-          absolute
-          -right-8
-          -top-8
-          h-28
-          w-28
-          rounded-full
-          bg-zinc-100
-          opacity-0
-          transition-opacity
-          duration-300
-          group-hover:opacity-100
-        "
-      />
-
-      <ArrowUpRight
-        size={18}
-        className="
-          absolute
-          bottom-5
-          right-5
-          text-zinc-300
-          opacity-0
-          transition-all
-          group-hover:translate-x-1
-          group-hover:-translate-y-1
-          group-hover:opacity-100
-        "
-      />
     </div>
   );
 }

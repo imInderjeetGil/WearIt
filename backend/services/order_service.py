@@ -1,7 +1,12 @@
+import math
+from datetime import date, datetime, time, timedelta
+
+from sqlalchemy import String, cast, func, or_
 from sqlalchemy.orm import Session, selectinload
 from models.order import Order, OrderItem
 from models.cart import CartItem
 from models.product import Product
+from models.user import User
 from fastapi import HTTPException
 
 VALID_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"]
@@ -155,14 +160,104 @@ def get_user_orders(db: Session, user_id: int):
     return db.query(Order).filter(Order.user_id == user_id).order_by(Order.created_at.desc()).all()
 
 
-def get_all_orders(db: Session):
-    return db.query(Order).options(
-        selectinload(Order.user),
-        selectinload(Order.items)
-            .selectinload(OrderItem.product),
-        selectinload(Order.items)
-            .selectinload(OrderItem.size),
-    ).all()
+def get_admin_orders(
+    db: Session,
+    page: int,
+    limit: int,
+    search: str | None = None,
+    status: str | None = None,
+    payment_status: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    sort: str | None = None,
+):
+    """Admin order list with backend filtering/sorting/pagination + summary.
+
+    Search matches order id, customer name and customer email. All queries
+    keep `cancel_requested` orders pinned first so cancellations surface on top.
+    """
+    query = (
+        db.query(Order)
+        .join(User, Order.user_id == User.id)
+        .options(
+            selectinload(Order.user),
+            selectinload(Order.items)
+                .selectinload(OrderItem.product),
+            selectinload(Order.items)
+                .selectinload(OrderItem.size),
+        )
+    )
+
+    if search:
+        query = query.filter(
+            or_(
+                cast(Order.id, String).ilike(f"%{search}%"),
+                User.name.ilike(f"%{search}%"),
+                User.email.ilike(f"%{search}%"),
+            )
+        )
+
+    if status:
+        query = query.filter(Order.status == status)
+
+    if payment_status:
+        query = query.filter(Order.payment_status == payment_status)
+
+    # created_at is a naive TIMESTAMP in server-local time; the frontend sends
+    # local YYYY-MM-DD dates, so naive-local boundaries are correct and TZ-safe.
+    if date_from:
+        query = query.filter(Order.created_at >= datetime.combine(date_from, time.min))
+    if date_to:
+        query = query.filter(
+            Order.created_at < datetime.combine(date_to, time.min) + timedelta(days=1)
+        )
+
+    if sort == "oldest":
+        order_by = (Order.cancel_requested.desc(), Order.created_at.asc())
+    elif sort == "amount_desc":
+        order_by = (Order.cancel_requested.desc(), Order.total_amount.desc(), Order.created_at.desc())
+    elif sort == "amount_asc":
+        order_by = (Order.cancel_requested.desc(), Order.total_amount.asc(), Order.created_at.desc())
+    else:  # newest (default)
+        order_by = (Order.cancel_requested.desc(), Order.created_at.desc())
+
+    query = query.order_by(*order_by)
+
+    total = query.count()
+    pages = max(math.ceil(total / limit) if total else 0, 1)
+
+    orders = query.offset((page - 1) * limit).limit(limit).all()
+
+    for order in orders:
+        order.customer_name = order.user.name if order.user else None
+        order.customer_email = order.user.email if order.user else None
+
+    return {
+        "items": orders,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": pages,
+        "summary": build_order_summary(db),
+    }
+
+
+def build_order_summary(db: Session):
+    """Counts by fulfillment status across ALL orders (unfiltered), for the
+    admin stat cards. One grouped query."""
+    rows = db.query(Order.status, func.count(Order.id)).group_by(Order.status).all()
+    counts = {s: 0 for s in VALID_STATUSES}
+    for status, count in rows:
+        if status in counts:
+            counts[status] = count
+    return {
+        "total": sum(counts.values()),
+        "pending": counts["pending"],
+        "processing": counts["processing"],
+        "shipped": counts["shipped"],
+        "delivered": counts["delivered"],
+        "cancelled": counts["cancelled"],
+    }
 
 
 def get_order_items(db: Session, order_id: int):

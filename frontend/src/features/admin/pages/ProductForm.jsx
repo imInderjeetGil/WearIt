@@ -12,6 +12,46 @@ import {
 import { getCategories } from "../../catalog/api/categories";
 import { getSizes } from "../../catalog/api/sizes";
 import { uploadProductImage } from "../../catalog/api/upload";
+
+// AI product metadata options — must stay in sync with backend/schemas/product_metadata.py
+const FIT_TYPES = ["Slim", "Regular", "Relaxed", "Oversized"];
+const GENDER_TARGETS = ["Male", "Female", "Unisex"];
+const COLORS = [
+  "Black", "White", "Grey", "Blue", "Red", "Green", "Yellow",
+  "Pink", "Brown", "Beige", "Navy", "Maroon", "Orange", "Purple", "Multi",
+];
+const MATERIALS = [
+  "Cotton", "Polyester", "Denim", "Wool", "Silk", "Linen",
+  "Nylon", "Rayon", "Leather", "Blended",
+];
+const PATTERNS = ["Solid", "Striped", "Checked", "Floral", "Printed", "Graphic", "Camo", "Plain"];
+const SEASONS = ["Summer", "Winter", "Monsoon", "Autumn", "Spring", "All Season"];
+const OCCASIONS = ["Casual", "Formal", "Party", "Sports", "Office", "Ethnic", "Streetwear"];
+const STYLES = ["Minimal", "Streetwear", "Casual", "Formal", "Vintage", "Sport", "Luxury"];
+
+function MetadataSelect({ label, name, value, onChange, options }) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-medium">
+        {label}
+      </label>
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="h-14 w-full rounded-xl border px-4"
+      >
+        <option value="">Select {label}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function ProductForm() {
   const { id } = useParams();
 
@@ -36,7 +76,16 @@ export default function ProductForm() {
     image_url: "",
     brand: "",
     sizes: [],
-    
+    product_metadata: {
+      fit_type: "",
+      gender_target: "",
+      color: "",
+      material: "",
+      pattern: "",
+      season: "",
+      occasion: "",
+      style: "",
+    },
   });
 
   const [imagePreview, setImagePreview] = useState(null);
@@ -76,7 +125,16 @@ export default function ProductForm() {
         image_url: data.image_url || "",
         brand: data.brand || "",
         sizes: data.sizes?.map((s) => s.size.id) || [],
-    
+        product_metadata: {
+          fit_type: data.product_metadata?.fit_type ?? "",
+          gender_target: data.product_metadata?.gender_target ?? "",
+          color: data.product_metadata?.color ?? "",
+          material: data.product_metadata?.material ?? "",
+          pattern: data.product_metadata?.pattern ?? "",
+          season: data.product_metadata?.season ?? "",
+          occasion: data.product_metadata?.occasion ?? "",
+          style: data.product_metadata?.style ?? "",
+        },
       });
 
       if (data.image_url) {
@@ -97,6 +155,15 @@ export default function ProductForm() {
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
+
+    if (name.startsWith("product_metadata.")) {
+      const key = name.split(".")[1];
+      setForm((prev) => ({
+        ...prev,
+        product_metadata: { ...prev.product_metadata, [key]: value },
+      }));
+      return;
+    }
 
     if (type === "checkbox") {
       setForm((prev) => ({
@@ -164,7 +231,7 @@ setImagePreview(data.image_url);
       category_id: form.category_id ? Number(form.category_id) : null,
       brand: form.brand || null,
       sizes: form.sizes,
-
+      product_metadata: form.product_metadata,
     };
 
     try {
@@ -399,6 +466,71 @@ setImagePreview(data.image_url);
                 {size.name}
               </label>
             ))}
+          </div>
+        </div>
+
+        {/* AI Product Metadata */}
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-zinc-500 uppercase tracking-wider">
+            Product Details (AI)
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <MetadataSelect
+              label="Fit"
+              name="product_metadata.fit_type"
+              value={form.product_metadata.fit_type}
+              onChange={handleChange}
+              options={FIT_TYPES}
+            />
+            <MetadataSelect
+              label="Gender"
+              name="product_metadata.gender_target"
+              value={form.product_metadata.gender_target}
+              onChange={handleChange}
+              options={GENDER_TARGETS}
+            />
+            <MetadataSelect
+              label="Color"
+              name="product_metadata.color"
+              value={form.product_metadata.color}
+              onChange={handleChange}
+              options={COLORS}
+            />
+            <MetadataSelect
+              label="Material"
+              name="product_metadata.material"
+              value={form.product_metadata.material}
+              onChange={handleChange}
+              options={MATERIALS}
+            />
+            <MetadataSelect
+              label="Pattern"
+              name="product_metadata.pattern"
+              value={form.product_metadata.pattern}
+              onChange={handleChange}
+              options={PATTERNS}
+            />
+            <MetadataSelect
+              label="Season"
+              name="product_metadata.season"
+              value={form.product_metadata.season}
+              onChange={handleChange}
+              options={SEASONS}
+            />
+            <MetadataSelect
+              label="Occasion"
+              name="product_metadata.occasion"
+              value={form.product_metadata.occasion}
+              onChange={handleChange}
+              options={OCCASIONS}
+            />
+            <MetadataSelect
+              label="Style"
+              name="product_metadata.style"
+              value={form.product_metadata.style}
+              onChange={handleChange}
+              options={STYLES}
+            />
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 import api from "../../../shared/api/http";
 
-export const getAllOrders = () =>
-  api.get("/orders/all");
+export const getAllOrders = (params = {}) =>
+  api.get("/orders/all", { params });
 
 export const getOrderItems = (orderId) =>
   api.get(`/orders/${orderId}/items`);

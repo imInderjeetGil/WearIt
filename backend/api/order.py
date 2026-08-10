@@ -1,11 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import date
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from schemas.order import OrderResponse, OrderUpdate
+from schemas.order import OrderListResponse, OrderResponse, OrderUpdate
 from services import order_service
 from core.dependencies import get_current_user, get_admin_user, get_db
 from models.user import User
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
+
+VALID_SORTS = {"newest", "oldest", "amount_desc", "amount_asc"}
+VALID_PAYMENT_STATUSES = {"pending", "paid", "cancelled"}
 
 
 @router.post("", response_model=OrderResponse)
@@ -21,12 +26,37 @@ def my_orders(db: Session = Depends(get_db), current_user: User = Depends(get_cu
     return orders
 
 
-@router.get("/all", response_model=list[OrderResponse])
-def all_orders(db: Session = Depends(get_db), current_user: User = Depends(get_admin_user)):
-    orders = order_service.get_all_orders(db)
-    for order in orders:
-        order.items = order_service.get_order_items(db, order.id)
-    return orders
+@router.get("/all", response_model=OrderListResponse)
+def all_orders(
+    page: int = Query(default=1, ge=1),
+    limit: int = Query(default=20, ge=1, le=100),
+    search: str | None = None,
+    status: str | None = None,
+    payment_status: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    sort: str = "newest",
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+):
+    if status and status not in order_service.VALID_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid status filter")
+    if payment_status and payment_status not in VALID_PAYMENT_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid payment status filter")
+    if sort not in VALID_SORTS:
+        raise HTTPException(status_code=400, detail="Invalid sort")
+
+    return order_service.get_admin_orders(
+        db,
+        page=page,
+        limit=limit,
+        search=search,
+        status=status,
+        payment_status=payment_status,
+        date_from=date_from,
+        date_to=date_to,
+        sort=sort,
+    )
 
 
 @router.post("/{order_id}/cancel", response_model=OrderResponse)

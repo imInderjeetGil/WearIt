@@ -11,4 +11,5 @@ wearit-frontend
 .env
 .env.production
 
+.claude
 
