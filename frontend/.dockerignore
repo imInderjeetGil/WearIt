@@ -1,0 +1,9 @@
+# Build context exclusions for the frontend Docker image.
+node_modules
+dist
+.env
+.env.*
+!*.example
+*.log
+npm-debug.log*
+.DS_Store

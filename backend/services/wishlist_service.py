@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 
 from models.wishlist import Wishlist
+from services import interaction_service
 
 def get_user_wishlist(
     db: Session,
@@ -45,6 +46,9 @@ def toggle_wishlist(
     )
 
     db.add(item)
+    interaction_service.record_interaction(
+        db, user_id, product_id, interaction_service.WISHLIST
+    )
     db.commit()
 
     return {

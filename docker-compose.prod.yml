@@ -1,0 +1,78 @@
+# Production deployment for WearIt.
+#
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Configuration comes ONLY from the root `.env` (see .env.example) — no secrets
+# are hardcoded here, and there are NO source-code bind mounts. The scheme is:
+#
+#   Browser -> nginx (frontend: 80/443)
+#                /        -> React SPA (dist, served by nginx)
+#                /api/v1/ -> FastAPI (backend, internal :8000)
+#                             -> PostgreSQL (db, internal :5432, named volume)
+
+services:
+  db:
+    image: postgres:15
+    container_name: wearit_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    # Internal only — never published to the host/Internet.
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build: ./backend
+    container_name: wearit_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    # Internal only — nginx is the sole entry point.
+    expose:
+      - "8000"
+    env_file:
+      - .env
+    healthcheck:
+      # /health/ready checks app liveness AND database connectivity.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health/ready', timeout=5).status==200 else 1)"
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    # Multi-stage image: builds the SPA at compose time, serves it with nginx.
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api/v1
+    container_name: wearit_frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Canonical routing config (tracked in git, read-only) + TLS certs
+      # (obtained on the host via Certbot before HTTPS can start).
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

@@ -9,6 +9,10 @@ const links = [
     name: "Products",
     to: "/products",
   },
+  {
+    name: "✨ Find Your Look",
+    to: "/find-your-look",
+  },
 ];
 
 export default function DesktopNav() {

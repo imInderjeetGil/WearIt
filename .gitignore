@@ -7,9 +7,11 @@ backend/.env
 
 # Node
 wearit-frontend
-# Env
+
+# Env — never commit secrets. Keep the example template tracked.
 .env
-.env.production
+.env.*
+!.env.example
 
 .claude
 

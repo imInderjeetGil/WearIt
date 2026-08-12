@@ -1,0 +1,14 @@
+# Build context exclusions for the backend Docker image.
+# IMPORTANT: never let local .env / secrets get baked into an image.
+.env
+.env.*
+*.example
+__pycache__
+*.pyc
+*.pyo
+venv
+.venv
+env
+.pytest_cache
+*.log
+templates

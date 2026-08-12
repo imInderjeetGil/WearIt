@@ -29,6 +29,7 @@ import AdminCategoriesPage from "../features/admin/pages/AdminCategoriesPage";
 import AdminOrdersPage from "../features/admin/pages/AdminOrdersPage";
 import ProfilePage from "../features/profile/pages/ProfilePage";
 import WishlistPage from "../features/wishlist/pages/WishlistPage";
+import FindYourLook from "../features/recommendations/pages/FindYourLook";
 
 
 export default function App() {
@@ -141,6 +142,15 @@ export default function App() {
             </ProtectedRoute>
           }
 
+        />
+
+        <Route
+          path="/find-your-look"
+          element={
+            <ProtectedRoute>
+              <FindYourLook />
+            </ProtectedRoute>
+          }
         />
       </Routes>
 

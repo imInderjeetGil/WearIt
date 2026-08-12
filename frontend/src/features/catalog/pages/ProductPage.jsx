@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Loader2, Star, Heart } from "lucide-react";
 import { getProduct, deleteProduct } from "../api/products";
+import { recordInteraction } from "../../interactions/api/interactions";
 import ReviewSection from "../../reviews/components/ReviewSection";
+import TryOnComingSoon from "../../../shared/components/TryOnComingSoon";
 import { toast } from "react-hot-toast";
 import useCartStore from "../../cart/store/cart-store";
 import { useAuth } from "../../auth/context/auth-context";
@@ -89,6 +91,10 @@ export default function ProductPage() {
       const { data } = await getProduct(id);
       setProduct(data);
       setQuantity(1);
+
+      if (isAuthenticated) {
+        void recordInteraction(data.id, "view");
+      }
 
       if (data.sizes?.length > 0) {
         setSelectedSize(data.sizes[0]);
@@ -348,6 +354,13 @@ export default function ProductPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* AI Try-On is intentionally a coming-soon feature (no generation yet). */}
+      {!isAdmin && (
+        <section className="mx-auto max-w-[1400px] px-4 lg:px-8 pb-10">
+          <TryOnComingSoon />
+        </section>
       )}
 
       <ReviewSection

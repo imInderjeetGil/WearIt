@@ -31,6 +31,8 @@ class UserProfile(Base):
 
     reference_image_url = Column(String, nullable=True)
 
+    ai_model_image_url = Column(String, nullable=True)
+
     created_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),

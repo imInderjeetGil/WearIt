@@ -4,7 +4,7 @@ from models.cart import CartItem
 from core.dependencies import get_current_user, get_db
 from models.user import User
 from models.order import Order
-from services import order_service
+from services import order_service, interaction_service
 from schemas.order import OrderShipping
 from schemas.payment import PaymentVerification
 import razorpay
@@ -74,7 +74,13 @@ def verify_payments(
 
     order.payment_status = "paid"
 
+    # Record a purchase interaction per product in the order.
+    for item in order.items:
+        interaction_service.record_interaction(
+            db, current_user.id, item.product_id, interaction_service.PURCHASE
+        )
+
     db.query(CartItem).filter(CartItem.user_id == current_user.id).delete()
     db.commit()
-    
+
     return {"message": "Payment verified", "order_id": order.id}

@@ -7,6 +7,9 @@ export const getProfile = () => api.get("/profile");
 export const updateProfile = (data) =>
   api.put("/profile", data);
 
+export const generateAiModel = () =>
+  api.post("/profile/generate-ai-model");
+
 export const uploadProfileImage = async (file) => {
   const formData = new FormData();
 

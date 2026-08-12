@@ -3,6 +3,7 @@ from models.cart import CartItem
 from models.product import Product
 from schemas.cart import CartItemAdd
 from fastapi import HTTPException
+from services import interaction_service
 
 def get_cart(db: Session, user_id: int):
     return db.query(CartItem).filter(CartItem.user_id == user_id).all()
@@ -36,6 +37,9 @@ def add_to_cart(db: Session, user_id: int, item: CartItemAdd):
         quantity = item.quantity
     )
     db.add(cart_item)
+    interaction_service.record_interaction(
+        db, user_id, item.product_id, interaction_service.CART
+    )
     db.commit()
     db.refresh(cart_item)
     return cart_item

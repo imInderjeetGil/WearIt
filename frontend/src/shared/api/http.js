@@ -6,10 +6,14 @@ import {
   logoutUser,
 } from "../../features/auth/api/auth";
 
+// API base URL resolution:
+// - Production: served behind nginx, same origin, prefix /api/v1
+//   (nginx strips /api/v1/ and proxies the rest to FastAPI).
+// - Development: Vite dev server has no proxy, so point VITE_API_URL at the
+//   local backend directly, e.g. VITE_API_URL=http://localhost:8000
+//   (FastAPI routers carry no /api/v1 prefix; nginx is what adds it).
 const api = axios.create({
-  baseURL:
-    //import.meta.env.VITE_API_URL ||
-    "http://localhost:8000",
+  baseURL: import.meta.env.VITE_API_URL?.trim() || "/api/v1",
 });
 
 let isRedirecting = false;

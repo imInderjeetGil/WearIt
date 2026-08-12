@@ -27,3 +27,8 @@ class User(Base):
     back_populates="user",
     cascade="all, delete-orphan",
 )
+    product_interactions = relationship(
+    "UserProductInteraction",
+    back_populates="user",
+    cascade="all, delete-orphan",
+)

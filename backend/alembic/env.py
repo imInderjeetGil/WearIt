@@ -20,15 +20,21 @@ import models.order
 import models.review
 import models.user_profile
 import models.wishlist
+import models.product_metadata
+import models.user_product_interaction
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# Allow DATABASE_URL env var to override the URL in alembic.ini
-# (used to autogenerate against a throwaway database).
-if os.getenv("DATABASE_URL"):
-    config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
+# DATABASE_URL is the single runtime source for the database URL (same as the
+# application uses in db/session.py). We REQUIRE it rather than falling back
+# to anything in alembic.ini, so credentials can never leak from a repo file
+# and the URL is always driven by the environment.
+database_url = os.getenv("DATABASE_URL")
+if not database_url:
+    raise RuntimeError("DATABASE_URL must be set when running alembic")
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

@@ -111,6 +111,14 @@ export default function MobileMenu({
         Products
       </NavLink>
 
+      <NavLink
+        to="/find-your-look"
+        onClick={onClose}
+        className="block text-lg font-medium"
+      >
+        ✨ Find Your Look
+      </NavLink>
+
       {!isAuthenticated ? (
         <>
           <Link

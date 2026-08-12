@@ -44,5 +44,6 @@ class ProfileResponse(BaseModel):
     preferred_fit: Optional[str] = None
     style_preference: Optional[str] = None
     reference_image_url: Optional[str] = None
+    ai_model_image_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)

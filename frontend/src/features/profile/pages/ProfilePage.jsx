@@ -6,12 +6,14 @@ import {
   getProfile,
   updateProfile,
   uploadProfileImage,
+  generateAiModel,
 } from "../api/profile";
 
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const photoInputRef = useRef(null);
 
   const [profile, setProfile] = useState({
@@ -22,11 +24,8 @@ export default function ProfilePage() {
     preferred_fit: "",
     style_preference: "",
     reference_image_url: "",
+    ai_model_image_url: "",
   });
-
-  useEffect(() => {
-    loadProfile();
-  }, []);
 
   async function loadProfile() {
     try {
@@ -40,6 +39,7 @@ export default function ProfilePage() {
         preferred_fit: data.preferred_fit || "",
         style_preference: data.style_preference || "",
         reference_image_url: data.reference_image_url || "",
+        ai_model_image_url: data.ai_model_image_url || "",
       });
     } catch {
       toast.error("Failed to load profile");
@@ -47,6 +47,10 @@ export default function ProfilePage() {
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
   async function handlePhotoUpload(e) {
     const file = e.target.files[0];
@@ -92,6 +96,27 @@ export default function ProfilePage() {
       toast.error("Update failed");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleGenerateModel() {
+    try {
+      setGenerating(true);
+
+      const { data } = await generateAiModel();
+
+      setProfile((prev) => ({
+        ...prev,
+        ai_model_image_url: data.ai_model_image_url || "",
+      }));
+
+      toast.success("AI Model generated");
+    } catch (err) {
+      toast.error(
+        err.response?.data?.detail ?? "AI generation failed"
+      );
+    } finally {
+      setGenerating(false);
     }
   }
 
@@ -204,7 +229,8 @@ export default function ProfilePage() {
           )}
 
           <button
-            disabled
+            onClick={handleGenerateModel}
+            disabled={generating || !profile.reference_image_url}
             className="
             mt-4
             w-full
@@ -213,11 +239,31 @@ export default function ProfilePage() {
             py-3
             font-semibold
             text-white
-            opacity-40
+            disabled:opacity-40
           "
           >
-            Generate AI Model
+            {generating ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 size={16} className="animate-spin" />
+                Generating AI Model...
+              </span>
+            ) : (
+              "Generate AI Model"
+            )}
           </button>
+
+          {profile.ai_model_image_url && (
+            <div className="mt-4">
+              <p className="mb-2 text-sm font-medium">
+                AI Model
+              </p>
+              <img
+                src={profile.ai_model_image_url}
+                alt="AI Model"
+                className="h-40 w-full rounded-xl object-cover"
+              />
+            </div>
+          )}
 
         </div>
 

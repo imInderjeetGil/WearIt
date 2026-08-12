@@ -1,3 +1,4 @@
+import httpx
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from core.dependencies import get_current_user,get_db
@@ -8,7 +9,7 @@ from schemas.profile import (
     ProfileUpdate,
 )
 
-from services import profile_service
+from services import gemini_service, profile_service
 from services.s3_service import upload_image
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
@@ -38,6 +39,56 @@ async def upload_profile_image(
 
     url = upload_image(file_bytes, file.filename, file.content_type, folder="profiles")
     return {"image_url": url}
+
+
+@router.post("/generate-ai-model", response_model=ProfileResponse)
+def generate_ai_model(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Explicit user action: generate the AI model image.
+
+    reference_image_url + profile info -> Gemini -> image -> S3 -> ai_model_image_url.
+    Never called on page load; the frontend only triggers this on button click.
+    """
+    profile = profile_service.get_profile(db, current_user.id)
+
+    if not profile.reference_image_url:
+        raise HTTPException(
+            status_code=400,
+            detail="Upload a reference photo before generating an AI model",
+        )
+
+    try:
+        image_resp = httpx.get(profile.reference_image_url, timeout=60)
+        image_resp.raise_for_status()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not download reference image: {exc}",
+        )
+
+    ref_mime = image_resp.headers.get("content-type", "image/jpeg")
+
+    try:
+        generated = gemini_service.generate_ai_model_image(
+            image_resp.content,
+            ref_mime,
+            profile,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI model generation failed: {exc}",
+        )
+
+    url = upload_image(generated, "ai_model.png", "image/png", folder="ai-models")
+
+    profile.ai_model_image_url = url
+    db.commit()
+    db.refresh(profile)
+
+    return profile
 
 
 @router.get(

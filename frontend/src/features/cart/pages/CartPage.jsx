@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 import useCartStore from "../store/cart-store";
 import { getSellingPrice } from "../../../shared/utils/pricing";
+import TryOnComingSoon from "../../../shared/components/TryOnComingSoon";
 
 export default function CartPage() {
   const {
@@ -154,9 +155,12 @@ export default function CartPage() {
 
         </div>
 
-        {/* Summary */}
+        {/* AI Try-On teaser (coming soon — no generation) */}
+        <div className="space-y-6">
+          <TryOnComingSoon compact />
 
-        <div className="h-fit rounded-2xl border p-6">
+          {/* Summary */}
+          <div className="h-fit rounded-2xl border p-6">
 
           <h2 className="text-2xl font-bold">
             Order Summary
@@ -199,6 +203,7 @@ export default function CartPage() {
             Proceed to Checkout
           </Link>
 
+          </div>
         </div>
 
       </div>
