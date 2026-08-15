@@ -1,6 +1,14 @@
 # Production deployment for WearIt.
 #
-#   docker compose -f docker-compose.prod.yml up -d --build
+#   ECR_REGISTRY=<account>.dkr.ecr.<region>.amazonaws.com IMAGE_TAG=v1.0.0 \
+#     docker compose -f docker-compose.prod.yml up -d
+#
+# Backend and frontend are PULLED as immutable, version-tagged ECR images
+# (ECR_REGISTRY + IMAGE_TAG, set in root .env). We do NOT use :latest in
+# production. Images are expected to be built and pushed by GitHub Actions:
+#
+#   ${ECR_REGISTRY}/wearit-backend:${IMAGE_TAG}
+#   ${ECR_REGISTRY}/wearit-frontend:${IMAGE_TAG}
 #
 # Configuration comes ONLY from the root `.env` (see .env.example) — no secrets
 # are hardcoded here, and there are NO source-code bind mounts. The scheme is:
@@ -9,6 +17,10 @@
 #                /        -> React SPA (dist, served by nginx)
 #                /api/v1/ -> FastAPI (backend, internal :8000)
 #                             -> PostgreSQL (db, internal :5432, named volume)
+#
+# NOTE: Alembic migrations are NOT run automatically on startup. Run them
+# manually once the DB is up:
+#   docker compose -f docker-compose.prod.yml exec backend alembic upgrade head
 
 services:
   db:
@@ -32,7 +44,7 @@ services:
       start_period: 10s
 
   backend:
-    build: ./backend
+    image: ${ECR_REGISTRY}/wearit-backend:${IMAGE_TAG}
     container_name: wearit_backend
     restart: always
     depends_on:
@@ -56,11 +68,9 @@ services:
       start_period: 20s
 
   frontend:
-    # Multi-stage image: builds the SPA at compose time, serves it with nginx.
-    build:
-      context: ./frontend
-      args:
-        VITE_API_URL: /api/v1
+    # nginx serving the SPA (built into the ECR image) + reverse proxy to the
+    # backend. The image is built with VITE_API_URL=/api/v1 at build time.
+    image: ${ECR_REGISTRY}/wearit-frontend:${IMAGE_TAG}
     container_name: wearit_frontend
     restart: always
     ports:
