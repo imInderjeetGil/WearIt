@@ -1,5 +1,5 @@
 from logging.config import fileConfig
-
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
@@ -8,6 +8,7 @@ import sys
 import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 from db.base import Base
 import models.user
