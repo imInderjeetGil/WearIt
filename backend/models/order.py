@@ -33,7 +33,8 @@ class OrderItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"))
     product_id = Column(Integer, ForeignKey("products.id"))
-    size_id = Column(Integer,ForeignKey("sizes.id"),nullable=False)
+    # Nullable: non-sized products (no ProductSize rows) are ordered without a size.
+    size_id = Column(Integer,ForeignKey("sizes.id"),nullable=True)
     quantity = Column(Integer)
     price = Column(Float)
     product = relationship("Product")

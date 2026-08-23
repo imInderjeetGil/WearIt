@@ -14,6 +14,7 @@ from api import (
     cart,
     category,
     interactions,
+    look,
     order,
     payment,
     product,
@@ -109,4 +110,5 @@ app.include_router(order.router)
 app.include_router(review.router)
 app.include_router(wishlist.router)
 app.include_router(recommendations.router)
+app.include_router(look.router)
 app.include_router(interactions.router)

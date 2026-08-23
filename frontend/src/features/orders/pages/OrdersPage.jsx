@@ -193,9 +193,11 @@ export default function OrdersPage() {
 
         <div className="mt-1.5 flex flex-wrap gap-2">
 
-          <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium">
-            Size {item.size?.name}
-          </span>
+          {item.size && (
+            <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium">
+              Size {item.size.name}
+            </span>
+          )}
 
         </div>
 

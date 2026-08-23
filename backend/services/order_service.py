@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session, selectinload
 from models.order import Order, OrderItem
 from models.cart import CartItem
 from models.product import Product
+from models.product_size import ProductSize
 from models.user import User
 from fastapi import HTTPException
 
@@ -15,8 +16,24 @@ VALID_STATUSES = ["pending", "processing", "shipped", "delivered", "cancelled"]
 def _restore_stock(db: Session, order: Order) -> None:
     for item in order.items:
         product = db.query(Product).filter(Product.id == item.product_id).first()
-        if product:
-            product.quantity += item.quantity
+        if not product:
+            continue
+
+        # Sized lines also restore the per-size stock they were taken from.
+        if item.size_id is not None:
+            product_size = (
+                db.query(ProductSize)
+                .filter(
+                    ProductSize.product_id == item.product_id,
+                    ProductSize.size_id == item.size_id,
+                )
+                .first()
+            )
+            if product_size:
+                product_size.stock += item.quantity
+
+        # Product.quantity was decremented at placement for every line.
+        product.quantity += item.quantity
 
 
 def place_order(db: Session, user_id: int, shipping=None):
@@ -35,10 +52,30 @@ def place_order(db: Session, user_id: int, shipping=None):
         if not product:
             raise HTTPException(status_code=404, detail=f"Product {cart_item.product_id} not found")
 
-        if product.quantity < cart_item.quantity:
-            raise HTTPException(status_code=400, detail=f"Not enough stock for {product.name}")
-
         selling_price = product.discount_price or product.price
+
+        if cart_item.size_id is None:
+            # Non-sized product: Product.quantity is the source of truth.
+            if product.quantity < cart_item.quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Not enough stock for {product.name}",
+                )
+        else:
+            # Sized product: the selected size's stock is the source of truth.
+            product_size = (
+                db.query(ProductSize)
+                .filter(
+                    ProductSize.product_id == product.id,
+                    ProductSize.size_id == cart_item.size_id,
+                )
+                .first()
+            )
+            if not product_size or product_size.stock < cart_item.quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Not enough stock for {product.name}",
+                )
 
         total += selling_price* cart_item.quantity
 
@@ -49,7 +86,10 @@ def place_order(db: Session, user_id: int, shipping=None):
             price=selling_price  # snapshot of current price
         ))
 
-        # Deduct stock
+        # Deduct stock. Sized products decrement both the per-size stock and
+        # the synchronized product-level total; non-sized only the total.
+        if cart_item.size_id is not None:
+            product_size.stock -= cart_item.quantity
         product.quantity -= cart_item.quantity
 
     shipping_data = shipping.model_dump() if shipping else {}

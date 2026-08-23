@@ -324,9 +324,11 @@ export default function AdminOrdersPage() {
                   <p className="font-medium truncate">
                     {item.product?.name || "Unknown Product"}
                   </p>
-                  <p className="text-sm text-zinc-500">
-                    Size: <span className="font-medium">{item.size?.name}</span>
-                  </p>
+                  {item.size && (
+                    <p className="text-sm text-zinc-500">
+                      Size: <span className="font-medium">{item.size.name}</span>
+                    </p>
+                  )}
                   <p className="text-sm text-zinc-500">
                     Qty: {item.quantity} × ₹{item.price}
                   </p>

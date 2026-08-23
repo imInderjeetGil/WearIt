@@ -40,6 +40,12 @@ export default function ProductsPage() {
     setPage(1);
   }, [search, sort, minPrice, maxPrice, categoryId, sizeId]);
 
+  // The available size family depends on the selected category, so a
+  // previously chosen size may no longer apply when the category changes.
+  useEffect(() => {
+    setSizeId(null);
+  }, [categoryId]);
+
 
   const clearFilters = () => {
     setSearch("");

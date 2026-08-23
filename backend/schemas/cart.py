@@ -4,7 +4,8 @@ from schemas.size import SizeResponse
 
 class CartItemAdd(BaseModel):
     product_id: int
-    size_id: int
+    # Optional: non-sized products are added to the cart without a size.
+    size_id: int | None = None
     quantity: int = Field(default=1, ge=1)
 
 class CartItemUpdate(BaseModel):
@@ -15,7 +16,7 @@ class CartItemResponse(BaseModel):
     product_id: int
     quantity: int
     product: ProductSummary
-    size: SizeResponse
+    size: SizeResponse | None = None
     
     class Config:
         from_attributes = True

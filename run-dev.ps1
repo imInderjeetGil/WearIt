@@ -1,0 +1,1 @@
+wt -d "$PSScriptRoot\backend" powershell -NoExit -Command "uvicorn main:app --reload" `; split-pane -V -d "$PSScriptRoot\frontend" powershell -NoExit -Command "npm run dev"

@@ -17,7 +17,8 @@ class OrderItemResponse(BaseModel):
     quantity: int
     price: float
     product: ProductResponse
-    size: SizeResponse
+    # Optional: non-sized products are ordered without a size.
+    size: SizeResponse | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

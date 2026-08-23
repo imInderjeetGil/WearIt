@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { getCategories } from "../../api/categories";
+import { getSizes } from "../../api/sizes";
+import {
+  getSizeFamilyForCategory,
+  getSizesForFamily,
+  sortCategoriesByDisplayOrder,
+} from "../../../../shared/utils/catalogConfig";
 
 export default function FilterSidebar({
   setMinPrice,
@@ -11,6 +18,8 @@ export default function FilterSidebar({
   clearFilters,
 }) {
   const [categories, setCategories] = useState([]);
+  const [sizes, setSizes] = useState([]);
+  const [expandedIds, setExpandedIds] = useState([]);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -21,17 +30,56 @@ export default function FilterSidebar({
     }
   }, []);
 
+  const loadSizes = useCallback(async () => {
+    try {
+      const { data } = await getSizes();
+      setSizes(data);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   useEffect(() => {
     void loadCategories();
-  }, [loadCategories]);
+    void loadSizes();
+  }, [loadCategories, loadSizes]);
 
-  const sizes = [
-    { id: 1, name: "XS" },
-    { id: 2, name: "S" },
-    { id: 3, name: "M" },
-    { id: 4, name: "L" },
-    { id: 5, name: "XL" },
-  ];
+  // One-level hierarchy: group children under their top-level parent.
+  const topLevelCategories = sortCategoriesByDisplayOrder(
+    categories.filter((category) => !category.parent_id)
+  );
+
+  const topLevelIds = new Set(topLevelCategories.map((c) => c.id));
+
+  const childrenByParent = {};
+  const orphanCategories = [];
+
+  for (const category of categories) {
+    if (!category.parent_id) continue;
+
+    if (topLevelIds.has(category.parent_id)) {
+      (childrenByParent[category.parent_id] ||= []).push(category);
+    } else {
+      // Defensive: a child whose parent is missing still renders at root.
+      orphanCategories.push(category);
+    }
+  }
+
+  function toggleExpanded(id) {
+    setExpandedIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((value) => value !== id)
+        : [...prev, id]
+    );
+  }
+
+  // The relevant size family depends on the selected category/subcategory.
+  // With no category context (All) or a category without a size system
+  // (e.g. Accessories) the whole SIZE section is hidden.
+  const sizeFamily = getSizeFamilyForCategory(categories, categoryId);
+  const showSizeFilter = Boolean(sizeFamily);
+  const availableSizes = getSizesForFamily(sizes, sizeFamily);
+
   return (
     <aside className="space-y-8">
 
@@ -56,7 +104,91 @@ export default function FilterSidebar({
 
     </label>
 
-    {categories.map((category) => (
+    {topLevelCategories.map((category) => {
+
+      const children = childrenByParent[category.id] || [];
+      const isExpanded = expandedIds.includes(category.id);
+
+      return (
+
+        <div key={category.id}>
+
+          <div className="flex items-center gap-1">
+
+            {children.length > 0 ? (
+
+              <button
+                type="button"
+                onClick={() => toggleExpanded(category.id)}
+                aria-label={
+                  isExpanded
+                    ? `Collapse ${category.name}`
+                    : `Expand ${category.name}`
+                }
+                className="p-0.5 rounded hover:bg-zinc-100 transition"
+              >
+
+                {isExpanded ? (
+                  <ChevronDown size={16} />
+                ) : (
+                  <ChevronRight size={16} />
+                )}
+
+              </button>
+
+            ) : (
+              <span className="w-5" />
+            )}
+
+            <label className="flex items-center gap-3 cursor-pointer">
+
+              <input
+                type="radio"
+                checked={categoryId === category.id}
+                onChange={() => setCategoryId(category.id)}
+              />
+
+              <span>{category.name}</span>
+
+            </label>
+
+          </div>
+
+          {isExpanded && children.length > 0 && (
+
+            <div className="ml-7 mt-3 space-y-3">
+
+              {children.map((child) => (
+
+                <label
+                  key={child.id}
+                  className="flex items-center gap-3 cursor-pointer"
+                >
+
+                  <input
+                    type="radio"
+                    checked={categoryId === child.id}
+                    onChange={() => setCategoryId(child.id)}
+                  />
+
+                  <span>{child.name}</span>
+
+                </label>
+
+              ))}
+
+            </div>
+
+          )}
+
+        </div>
+
+      );
+
+    })}
+
+    {/* Defensive: children whose parent is missing render at root level */}
+    {orphanCategories.map((category) => (
 
       <label
         key={category.id}
@@ -140,7 +272,8 @@ export default function FilterSidebar({
 
       </div>
 
-      {/* Size */}
+      {/* Size (category-aware; hidden entirely when no size system applies) */}
+      {showSizeFilter && (
       <div>
 
   <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider">
@@ -149,7 +282,7 @@ export default function FilterSidebar({
 
   <div className="flex flex-wrap gap-2">
 
-    {sizes.map((size) => (
+    {availableSizes.map((size) => (
 
       <button
         key={size.id}
@@ -184,6 +317,7 @@ export default function FilterSidebar({
   </div>
 
 </div>
+      )}
 <button
   onClick={clearFilters}
   className="

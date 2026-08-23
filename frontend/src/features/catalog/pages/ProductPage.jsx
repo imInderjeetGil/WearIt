@@ -62,7 +62,12 @@ export default function ProductPage() {
     }
 
     try {
-      await addItem(product.id, selectedSize.size.id, quantity);
+      // Non-sized products have no sizes: add to cart without a size.
+      await addItem(
+        product.id,
+        selectedSize ? selectedSize.size.id : null,
+        quantity
+      );
       toast.success("Added to cart");
     } catch (err) {
       toast.error(
@@ -98,6 +103,8 @@ export default function ProductPage() {
 
       if (data.sizes?.length > 0) {
         setSelectedSize(data.sizes[0]);
+      } else {
+        setSelectedSize(null);
       }
 
       if (isAuthenticated) {
@@ -146,6 +153,10 @@ export default function ProductPage() {
       </section>
     );
   }
+
+  // Sized products are limited by the selected size's stock; non-sized
+  // products by the product-level quantity.
+  const maxQuantity = selectedSize ? selectedSize.stock : product.quantity;
 
   return (
     <>
@@ -242,27 +253,34 @@ export default function ProductPage() {
               {product.description}
             </p>
 
-            {/* Sizes */}
-            <div className="space-y-3 pt-1">
-              <h3 className="font-semibold text-zinc-900 text-xs uppercase tracking-wider">
-                Select Size
-              </h3>
-              <div className="flex flex-wrap gap-3">
-                {product.sizes?.map((size) => (
-                  <button
-                    key={size.size.id}
-                    onClick={() => setSelectedSize(size)}
-                    className={`h-12 min-w-[3.5rem] px-5 rounded-xl border font-semibold text-sm transition-all ${
-                      selectedSize?.size.id === size.size.id
-                        ? "bg-black text-white border-black shadow-sm"
-                        : "border-zinc-200 hover:border-black text-zinc-800"
-                    }`}
-                  >
-                    {size.size.name}
-                  </button>
-                ))}
+            {/* Sizes (hidden entirely for non-sized products) */}
+            {product.sizes?.length > 0 && (
+              <div className="space-y-3 pt-1">
+                <h3 className="font-semibold text-zinc-900 text-xs uppercase tracking-wider">
+                  Select Size
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {product.sizes.map((size) => (
+                    <button
+                      key={size.size.id}
+                      onClick={() => {
+                        setSelectedSize(size);
+                        setQuantity((q) =>
+                          Math.max(1, Math.min(q, size.stock))
+                        );
+                      }}
+                      className={`h-12 min-w-[3.5rem] px-5 rounded-xl border font-semibold text-sm transition-all ${
+                        selectedSize?.size.id === size.size.id
+                          ? "bg-black text-white border-black shadow-sm"
+                          : "border-zinc-200 hover:border-black text-zinc-800"
+                      }`}
+                    >
+                      {size.size.name}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quantity */}
             <div className="space-y-3 pt-1">
@@ -280,10 +298,8 @@ export default function ProductPage() {
                   {quantity}
                 </span>
                 <button
-                  onClick={() =>
-                    setQuantity((q) => Math.min(product.quantity, q + 1))
-                  }
-                  disabled={quantity >= product.quantity}
+                  onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+                  disabled={quantity >= maxQuantity}
                   className="w-12 h-12 flex items-center justify-center font-bold text-lg text-zinc-700 hover:bg-zinc-50 transition disabled:opacity-30"
                 >
                   +
@@ -311,10 +327,10 @@ export default function ProductPage() {
               ) : (
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.quantity < 1}
+                  disabled={maxQuantity < 1}
                   className="h-14 w-full rounded-xl bg-black text-white font-semibold hover:bg-zinc-800 transition disabled:bg-zinc-300"
                 >
-                  {product.quantity < 1 ? "Out of Stock" : "Add To Cart"}
+                  {maxQuantity < 1 ? "Out of Stock" : "Add To Cart"}
                 </button>
               )}
             </div>

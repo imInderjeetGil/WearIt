@@ -12,6 +12,10 @@ import {
 import { getCategories } from "../../catalog/api/categories";
 import { getSizes } from "../../catalog/api/sizes";
 import { uploadProductImage } from "../../catalog/api/upload";
+import {
+  getSizeFamilyForCategory,
+  getSizesForFamily,
+} from "../../../shared/utils/catalogConfig";
 
 // AI product metadata options — must stay in sync with backend/schemas/product_metadata.py
 const FIT_TYPES = ["Slim", "Regular", "Relaxed", "Oversized"];
@@ -24,9 +28,9 @@ const MATERIALS = [
   "Cotton", "Polyester", "Denim", "Wool", "Silk", "Linen",
   "Nylon", "Rayon", "Leather", "Blended",
 ];
-const PATTERNS = ["Solid", "Striped", "Checked", "Floral", "Printed", "Graphic", "Camo", "Plain"];
+const PATTERNS = ["Solid", "Striped", "Checked", "Floral", "Printed", "Graphic", "Camo", "Plain","Embroidered"];
 const SEASONS = ["Summer", "Winter", "Monsoon", "Autumn", "Spring", "All Season"];
-const OCCASIONS = ["Casual", "Formal", "Party", "Sports", "Office", "Ethnic", "Streetwear"];
+const OCCASIONS = ["Casual", "Formal", "Party", "Sports", "Office", "Ethnic", "Streetwear","Wedding","Festive"];
 const STYLES = ["Minimal", "Streetwear", "Casual", "Formal", "Vintage", "Sport", "Luxury"];
 
 function MetadataSelect({ label, name, value, onChange, options }) {
@@ -52,6 +56,55 @@ function MetadataSelect({ label, name, value, onChange, options }) {
   );
 }
 
+function MultiSelectChips({ label, name, value, onChange, options }) {
+  function toggle(option) {
+    onChange({
+      target: {
+        name,
+        value: value.includes(option)
+          ? value.filter((v) => v !== option)
+          : [...value, option],
+      },
+    });
+  }
+
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-medium">
+        {label}
+      </label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => toggle(option)}
+            className={`
+              rounded-lg
+              border
+              px-4
+              py-2
+              text-sm
+              transition
+
+              ${
+                value.includes(option)
+                  ? "bg-black text-white border-black"
+                  : "hover:bg-zinc-100"
+              }
+            `}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const toArray = (value) =>
+  Array.isArray(value) ? value : value ? [value] : [];
+
 export default function ProductForm() {
   const { id } = useParams();
 
@@ -65,16 +118,21 @@ export default function ProductForm() {
   const [categories, setCategories] = useState([]);
   const [sizes, setSizes] = useState([]);
 
+  // Parent category drives the subcategory options (one-level hierarchy).
+  const [selectedParentId, setSelectedParentId] = useState("");
+
 
   const [form, setForm] = useState({
     name: "",
     description: "",
     price: "",
     discount_price: "",
-    quantity: "",
     category_id: "",
     image_url: "",
     brand: "",
+    // Non-sized inventory: single product-level stock quantity
+    quantity: "",
+    // Per-size inventory (sized categories): [{ size_id, stock }]
     sizes: [],
     product_metadata: {
       fit_type: "",
@@ -82,8 +140,8 @@ export default function ProductForm() {
       color: "",
       material: "",
       pattern: "",
-      season: "",
-      occasion: "",
+      season: [],
+      occasion: [],
       style: "",
     },
   });
@@ -111,28 +169,139 @@ export default function ProductForm() {
   }, []);
 
 
+  const topLevelCategories = categories.filter(
+    (category) => !category.parent_id
+  );
+
+  const subcategories = selectedParentId
+    ? categories.filter(
+        (category) => category.parent_id === Number(selectedParentId)
+      )
+    : [];
+
+  const selectedParent = topLevelCategories.find(
+    (category) => String(category.id) === String(selectedParentId)
+  );
+
+  // Available sizes depend on the selected category (leaf, or the parent
+  // while no subcategory has been chosen yet).
+  const sizeFamily = getSizeFamilyForCategory(
+    categories,
+    form.category_id || selectedParentId
+  );
+  const availableSizes = getSizesForFamily(sizes, sizeFamily);
+
+  // A null size family means the category has no size system (e.g.
+  // Accessories): those products use a single product-level quantity.
+  const categorySelected = Boolean(selectedParentId || form.category_id);
+  const isSizedCategory = Boolean(sizeFamily);
+
+  const totalStock = form.sizes.reduce((sum, s) => sum + (s.stock || 0), 0);
+
+  function pruneSizes(categoryId) {
+    const family = getSizeFamilyForCategory(categories, categoryId);
+
+    // Non-sized categories have no size system: clear any selected sizes.
+    if (!family) {
+      setForm((prev) => ({ ...prev, sizes: [] }));
+      return;
+    }
+
+    const availableIds = new Set(
+      getSizesForFamily(sizes, family).map((s) => s.id)
+    );
+
+    setForm((prev) => ({
+      ...prev,
+      sizes: prev.sizes.filter((s) => availableIds.has(s.size_id)),
+    }));
+  }
+
+  function handleParentChange(e) {
+    const parentId = e.target.value;
+
+    setSelectedParentId(parentId);
+
+    if (!parentId) {
+      setForm((prev) => ({ ...prev, category_id: "", sizes: [] }));
+      return;
+    }
+
+    const children = categories.filter(
+      (category) => category.parent_id === Number(parentId)
+    );
+
+    // A parent with no subcategories is used as the category itself.
+    const categoryId = children.length === 0 ? parentId : "";
+
+    setForm((prev) => ({ ...prev, category_id: categoryId }));
+    pruneSizes(categoryId || parentId);
+  }
+
+  function handleSubcategoryChange(e) {
+    const categoryId = e.target.value;
+
+    setForm((prev) => ({ ...prev, category_id: categoryId }));
+    pruneSizes(categoryId);
+  }
+
+  function toggleSize(sizeId) {
+    setForm((prev) => {
+      const exists = prev.sizes.some((s) => s.size_id === sizeId);
+
+      return {
+        ...prev,
+        sizes: exists
+          ? prev.sizes.filter((s) => s.size_id !== sizeId)
+          : [...prev.sizes, { size_id: sizeId, stock: 0 }],
+      };
+    });
+  }
+
+  function updateSizeStock(sizeId, stock) {
+    setForm((prev) => ({
+      ...prev,
+      sizes: prev.sizes.map((s) =>
+        s.size_id === sizeId ? { ...s, stock: Number(stock) || 0 } : s
+      ),
+    }));
+  }
+
+
   const loadProduct = useCallback(async () => {
     try {
       const { data } = await getProduct(id);
+
+      // Derive the parent selection from the product's category so the
+      // subcategory dropdown shows the right options when editing.
+      const loadedCategory = data.category;
+      setSelectedParentId(
+        loadedCategory
+          ? String(loadedCategory.parent_id ?? loadedCategory.id)
+          : ""
+      );
 
       setForm({
         name: data.name,
         description: data.description,
         price: data.price,
         discount_price: data.discount_price || "",
-        quantity: data.quantity,
         category_id: data.category_id || "",
         image_url: data.image_url || "",
         brand: data.brand || "",
-        sizes: data.sizes?.map((s) => s.size.id) || [],
+        quantity: data.quantity ?? 0,
+        sizes: data.sizes?.map((s) => ({
+          size_id: s.size.id,
+          stock: s.stock,
+        })) || [],
         product_metadata: {
           fit_type: data.product_metadata?.fit_type ?? "",
           gender_target: data.product_metadata?.gender_target ?? "",
           color: data.product_metadata?.color ?? "",
           material: data.product_metadata?.material ?? "",
           pattern: data.product_metadata?.pattern ?? "",
-          season: data.product_metadata?.season ?? "",
-          occasion: data.product_metadata?.occasion ?? "",
+          season: toArray(data.product_metadata?.season),
+          occasion: toArray(data.product_metadata?.occasion),
           style: data.product_metadata?.style ?? "",
         },
       });
@@ -223,14 +392,21 @@ setImagePreview(data.image_url);
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (!form.category_id) {
+      toast.error("Please select a subcategory");
+      return;
+    }
+
     const payload = {
       ...form,
       price: Number(form.price),
       discount_price: form.discount_price ? Number(form.discount_price) : null,
-      quantity: Number(form.quantity),
       category_id: form.category_id ? Number(form.category_id) : null,
       brand: form.brand || null,
-      sizes: form.sizes,
+      // Sized products derive total stock from per-size stock server-side;
+      // non-sized products use this product-level quantity directly.
+      quantity: Number(form.quantity) || 0,
+      sizes: isSizedCategory ? form.sizes : [],
       product_metadata: form.product_metadata,
     };
 
@@ -264,7 +440,7 @@ setImagePreview(data.image_url);
       </h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Name */}
+        {/* Basic Information */}
         <div>
           <label className="mb-2 block text-sm font-medium">
             Product Name
@@ -279,7 +455,6 @@ setImagePreview(data.image_url);
           />
         </div>
 
-        {/* Description */}
         <div>
           <label className="mb-2 block text-sm font-medium">
             Description
@@ -294,7 +469,6 @@ setImagePreview(data.image_url);
           />
         </div>
 
-        {/* Brand */}
         <div>
           <label className="mb-2 block text-sm font-medium">
             Brand
@@ -308,7 +482,7 @@ setImagePreview(data.image_url);
           />
         </div>
 
-        {/* Image Upload */}
+        {/* Media */}
         <div>
           <label className="mb-2 block text-sm font-medium">
             Product Image
@@ -372,28 +546,60 @@ setImagePreview(data.image_url);
         </div>
 
         {/* Category */}
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Category
-          </label>
-          <select
-            name="category_id"
-            value={form.category_id}
-            onChange={handleChange}
-            className="h-14 w-full rounded-xl border px-4"
-            required
-          >
-            <option value="">Select Category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Category / Parent
+            </label>
+            <select
+              name="parent_category"
+              value={selectedParentId}
+              onChange={handleParentChange}
+              className="h-14 w-full rounded-xl border px-4"
+              required
+            >
+              <option value="">Select Category</option>
+              {topLevelCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Subcategory
+            </label>
+            <select
+              name="category_id"
+              value={form.category_id}
+              onChange={handleSubcategoryChange}
+              className="h-14 w-full rounded-xl border px-4 disabled:bg-zinc-100 disabled:text-zinc-400"
+              disabled={!selectedParentId || subcategories.length === 0}
+            >
+              {!selectedParentId ? (
+                <option value="">Select a parent category first</option>
+              ) : subcategories.length === 0 ? (
+                <option value={selectedParentId}>
+                  No subcategories — using {selectedParent?.name}
+                </option>
+              ) : (
+                <>
+                  <option value="">Select Subcategory</option>
+                  {subcategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
+          </div>
         </div>
 
-        {/* Pricing & Stock */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Pricing */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="mb-2 block text-sm font-medium">
               Price (₹)
@@ -426,50 +632,90 @@ setImagePreview(data.image_url);
               step="0.01"
             />
           </div>
+        </div>
 
+        {/* Inventory depends on the selected category:
+            sized -> per-size stock; non-sized -> one product-level quantity */}
+        {isSizedCategory ? (
           <div>
             <label className="mb-2 block text-sm font-medium">
-              Stock Quantity
+              Sizes & Stock
             </label>
-            <input
-              type="number"
-              name="quantity"
-              value={form.quantity}
-              onChange={handleChange}
-              placeholder="Stock quantity"
-              className="h-14 w-full rounded-xl border px-4"
-              required
-              min="0"
-            />
-          </div>
-        </div>
 
-        {/* Sizes */}
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Sizes
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {sizes.map((size) => (
-              <label
-                key={size.id}
-                className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-zinc-50 cursor-pointer"
-              >
+            {availableSizes.length === 0 ? (
+              <p className="text-sm text-zinc-500">
+                Select a category to see the available sizes
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {availableSizes.map((size) => {
+                  const entry = form.sizes.find((s) => s.size_id === size.id);
+                  const selected = Boolean(entry);
+
+                  return (
+                    <div key={size.id} className="flex items-center gap-3">
+                      <label className="inline-flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-zinc-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => toggleSize(size.id)}
+                          className="h-4 w-4 rounded border-zinc-300 text-black focus:ring-black"
+                        />
+                        {size.name}
+                      </label>
+
+                      {selected && (
+                        <input
+                          type="number"
+                          min="0"
+                          value={entry.stock}
+                          onChange={(e) => updateSizeStock(size.id, e.target.value)}
+                          placeholder="Stock"
+                          className="h-10 w-28 rounded-lg border px-3"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <p className="mt-2 text-sm text-zinc-500">
+              Total stock: {totalStock}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <label className="mb-2 block text-sm font-medium">
+              Inventory
+            </label>
+
+            {!categorySelected ? (
+              <p className="text-sm text-zinc-500">
+                Select a category to set the inventory
+              </p>
+            ) : (
+              <>
+                <label className="mb-2 block text-sm font-medium">
+                  Stock Quantity
+                </label>
                 <input
-                  type="checkbox"
-                  name="sizes"
-                  value={size.id}
-                  checked={form.sizes.includes(size.id)}
+                  type="number"
+                  name="quantity"
+                  value={form.quantity}
                   onChange={handleChange}
-                  className="h-4 w-4 rounded border-zinc-300 text-black focus:ring-black"
+                  placeholder="Stock Quantity"
+                  className="h-14 w-full rounded-xl border px-4 sm:w-64"
+                  required
+                  min="0"
+                  step="1"
                 />
-                {size.name}
-              </label>
-            ))}
+              </>
+            )}
           </div>
-        </div>
+        )}
 
-        {/* AI Product Metadata */}
+        {/* Product Details (AI) */}
         <div>
           <h3 className="mb-3 text-sm font-semibold text-zinc-500 uppercase tracking-wider">
             Product Details (AI)
@@ -510,14 +756,14 @@ setImagePreview(data.image_url);
               onChange={handleChange}
               options={PATTERNS}
             />
-            <MetadataSelect
+            <MultiSelectChips
               label="Season"
               name="product_metadata.season"
               value={form.product_metadata.season}
               onChange={handleChange}
               options={SEASONS}
             />
-            <MetadataSelect
+            <MultiSelectChips
               label="Occasion"
               name="product_metadata.occasion"
               value={form.product_metadata.occasion}

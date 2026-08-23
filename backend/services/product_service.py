@@ -15,6 +15,7 @@ from models.category import Category
 from models.review import Review
 from models.size import Size
 from schemas.product import ProductCreate, ProductUpdate
+from services.inventory import is_sized_category
 
 
 def _unique_slug(db: Session, value: str, product_id: int | None = None) -> str:
@@ -33,23 +34,70 @@ def _unique_slug(db: Session, value: str, product_id: int | None = None) -> str:
         suffix += 1
 
 
-def _validate_relations(
-    db: Session,
-    category_id: int | None,
-    sizes: list[int] | None,
-) -> None:
+def _validate_relations(db: Session, category_id: int | None) -> None:
     if category_id is not None and not db.get(Category, category_id):
         raise HTTPException(status_code=404, detail="Category not found")
 
-    for ids, model, label in [(sizes, Size, "size")]:
-        if ids is None:
-            continue
-        if len(ids) != len(set(ids)):
-            raise HTTPException(status_code=400, detail=f"Duplicate {label} selected")
-        existing_ids = {item.id for item in db.query(model).filter(model.id.in_(ids)).all()}
-        missing_ids = set(ids) - existing_ids
-        if missing_ids:
-            raise HTTPException(status_code=404, detail=f"{label.title()} not found")
+
+def _resolve_inventory(
+    db: Session,
+    category_id: int | None,
+    sizes: list | None,
+) -> tuple[bool, list[tuple[int, int]]]:
+    """Enforce the category-aware inventory rule server-side.
+
+    - Sized category   -> returns (True, normalized (size_id, stock) entries);
+      Product.quantity must be derived from the sum of the per-size stock.
+    - Non-sized category (or none) -> returns (False, []); no ProductSize
+      records may be created and Product.quantity is used directly.
+    """
+    category = db.get(Category, category_id) if category_id is not None else None
+
+    if not is_sized_category(category):
+        if sizes:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "This category does not support sizes; "
+                    "set the stock quantity instead"
+                ),
+            )
+        return False, []
+
+    return True, _normalize_sizes(db, sizes)
+
+
+def _normalize_sizes(
+    db: Session,
+    sizes: list | None,
+) -> list[tuple[int, int]]:
+    """Normalize the incoming size payload to unique (size_id, stock) pairs.
+
+    Accepts bare size ids (stock defaults to 0) or {size_id, stock} objects.
+    """
+    if not sizes:
+        return []
+
+    entries: list[tuple[int, int]] = []
+    for entry in sizes:
+        if isinstance(entry, int):
+            entries.append((entry, 0))
+        else:  # dumped ProductSizeInput dict
+            entries.append((int(entry["size_id"]), int(entry.get("stock", 0))))
+
+    ids = [size_id for size_id, _ in entries]
+
+    if len(ids) != len(set(ids)):
+        raise HTTPException(status_code=400, detail="Duplicate size selected")
+
+    existing_ids = {
+        item.id for item in db.query(Size).filter(Size.id.in_(ids)).all()
+    }
+    missing_ids = set(ids) - existing_ids
+    if missing_ids:
+        raise HTTPException(status_code=404, detail="Size not found")
+
+    return entries
 
 
 def _upsert_product_metadata(
@@ -167,9 +215,17 @@ def get_products(
     if max_price is not None:
         query = query.filter(Product.price <= max_price)
 
-    # Category filter
+    # Category filter. Selecting a parent category also matches products
+    # assigned to any of its subcategories (one-level hierarchy).
     if category_id:
-        query = query.filter(Product.category_id == category_id)
+        category_ids = [category_id]
+        category_ids.extend(
+            row.id
+            for row in db.query(Category.id)
+            .filter(Category.parent_id == category_id)
+            .all()
+        )
+        query = query.filter(Product.category_id.in_(category_ids))
 
     # Size filter
     if size_id:
@@ -219,7 +275,19 @@ def create_product(db: Session, product: ProductCreate):
 
     sizes = product_data.pop("sizes", [])
     metadata_data = product_data.pop("product_metadata", None)
-    _validate_relations(db, product_data.get("category_id"), sizes)
+    _validate_relations(db, product_data.get("category_id"))
+
+    sized, size_entries = _resolve_inventory(
+        db,
+        product_data.get("category_id"),
+        sizes,
+    )
+
+    # Sized products derive total stock from the per-size stock values;
+    # non-sized products keep the submitted Product.quantity as-is.
+    if sized:
+        product_data["quantity"] = sum(stock for _, stock in size_entries)
+
     product_data["slug"] = _unique_slug(
         db,
         product_data.get("slug") or product_data["name"],
@@ -232,12 +300,12 @@ def create_product(db: Session, product: ProductCreate):
 
     _upsert_product_metadata(db, db_product.id, metadata_data)
 
-    for size_id in sizes:
+    for size_id, stock in size_entries:
         db.add(
         ProductSize(
             product_id=db_product.id,
             size_id=size_id,
-            stock=0,
+            stock=stock,
         )
     )
 
@@ -261,11 +329,22 @@ def update_product(
     sizes = product_data.pop("sizes", None)
     metadata_data = product_data.pop("product_metadata", None)
 
-    _validate_relations(
-        db,
-        product_data.get("category_id"),
-        sizes,
+    _validate_relations(db, product_data.get("category_id"))
+
+    # The effective category after this update decides the inventory rule.
+    effective_category_id = product_data.get(
+        "category_id", db_product.category_id
     )
+    sized, size_entries = _resolve_inventory(db, effective_category_id, sizes)
+
+    if sized and size_entries is not None:
+        # Keep the product-level total in sync with the per-size stock.
+        product_data["quantity"] = sum(stock for _, stock in size_entries)
+
+    if not sized:
+        # Non-sized products must not keep per-size rows behind
+        # (e.g. the product was moved from a sized category).
+        db.query(ProductSize).filter(ProductSize.product_id == product_id).delete()
 
     if "slug" in product_data:
         product_data["slug"] = _unique_slug(
@@ -280,10 +359,10 @@ def update_product(
     for key, value in product_data.items():
         setattr(db_product, key, value)
 
-    if sizes is not None:
+    if size_entries is not None:
         db.query(ProductSize).filter(ProductSize.product_id == product_id).delete()
-        for size_id in sizes:
-            db.add(ProductSize(product_id=product_id, size_id=size_id, stock=0))
+        for size_id, stock in size_entries:
+            db.add(ProductSize(product_id=product_id, size_id=size_id, stock=stock))
 
     _upsert_product_metadata(db, product_id, metadata_data)
 

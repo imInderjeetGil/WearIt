@@ -8,7 +8,8 @@ class CartItem(Base):
     id = Column(Integer,primary_key=True,index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     product_id = Column(Integer, ForeignKey("products.id"))
-    size_id = Column(Integer,ForeignKey("sizes.id"),nullable=False)
+    # Nullable: non-sized products (no ProductSize rows) are carted without a size.
+    size_id = Column(Integer,ForeignKey("sizes.id"),nullable=True)
     quantity = Column(Integer, default=1)
     
     product = relationship("Product")

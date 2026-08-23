@@ -54,9 +54,11 @@ export default function RecentOrderCard({ order }) {
 
         <div className="mt-2 flex items-center gap-2">
 
-          <span className="rounded-full bg-zinc-100 px-2 py-1 text-xs">
-            Size {item.size?.name}
-          </span>
+          {item.size && (
+            <span className="rounded-full bg-zinc-100 px-2 py-1 text-xs">
+              Size {item.size.name}
+            </span>
+          )}
 
           <span
             className={`rounded-full px-2 py-1 text-xs ${

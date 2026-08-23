@@ -97,9 +97,11 @@ export default function CartPage() {
                     ₹{getSellingPrice(item.product)}
                   </p>
 
-                  <p className="mt-1 text-sm text-zinc-500">
-                    Size : {item.size.name}
-                  </p>
+                  {item.size && (
+                    <p className="mt-1 text-sm text-zinc-500">
+                      Size : {item.size.name}
+                    </p>
+                  )}
 
                   <div className="mt-3 flex w-fit items-center rounded-lg border">
                     <button

@@ -20,6 +20,7 @@ export default function AdminCategoriesPage() {
   const [form, setForm] = useState({
     name: "",
     slug: "",
+    parent_id: "",
   });
 
   const fetchCategories = useCallback(async () => {
@@ -37,6 +38,17 @@ export default function AdminCategoriesPage() {
     void fetchCategories();
   }, [fetchCategories]);
 
+  // Only top-level categories can act as parents (one level of nesting).
+  // A category can never select itself as its own parent.
+  const parentOptions = categories.filter(
+    (category) =>
+      !category.parent_id && category.id !== editingCategory?.id
+  );
+
+  const categoryNameById = Object.fromEntries(
+    categories.map((category) => [category.id, category.name])
+  );
+
   function handleChange(e) {
     setForm((prev) => ({
       ...prev,
@@ -46,31 +58,40 @@ export default function AdminCategoriesPage() {
 
   function openCreate() {
     setEditingCategory(null);
-    setForm({ name: "", slug: "" });
+    setForm({ name: "", slug: "", parent_id: "" });
     setShowForm(true);
   }
 
   function openEdit(category) {
     setEditingCategory(category);
-    setForm({ name: category.name, slug: category.slug });
+    setForm({
+      name: category.name,
+      slug: category.slug,
+      parent_id: category.parent_id ?? "",
+    });
     setShowForm(true);
   }
 
   function closeForm() {
     setShowForm(false);
     setEditingCategory(null);
-    setForm({ name: "", slug: "" });
+    setForm({ name: "", slug: "", parent_id: "" });
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
 
+    const payload = {
+      ...form,
+      parent_id: form.parent_id ? Number(form.parent_id) : null,
+    };
+
     try {
       if (editingCategory) {
-        await updateCategory(editingCategory.id, form);
+        await updateCategory(editingCategory.id, payload);
         toast.success("Category updated");
       } else {
-        await createCategory(form);
+        await createCategory(payload);
         toast.success("Category created");
       }
       closeForm();
@@ -126,6 +147,11 @@ export default function AdminCategoriesPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-sm truncate">{category.name}</p>
                   <p className="text-xs text-zinc-500 font-mono mt-0.5">{category.slug}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {category.parent_id
+                      ? `Under ${categoryNameById[category.parent_id] || "Unknown"}`
+                      : "Top-level"}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-zinc-500 bg-zinc-100 px-2 py-1 rounded-full">
@@ -161,6 +187,7 @@ export default function AdminCategoriesPage() {
               <thead className="bg-zinc-50">
                 <tr>
                   <th className="p-4 text-left font-semibold text-zinc-600">Name</th>
+                  <th className="p-4 text-left font-semibold text-zinc-600">Parent</th>
                   <th className="p-4 text-left font-semibold text-zinc-600">Slug</th>
                   <th className="p-4 text-left font-semibold text-zinc-600">Products</th>
                   <th className="p-4 text-right font-semibold text-zinc-600">Actions</th>
@@ -170,6 +197,11 @@ export default function AdminCategoriesPage() {
                 {categories.map((category) => (
                   <tr key={category.id} className="hover:bg-zinc-50">
                     <td className="p-4 font-medium">{category.name}</td>
+                    <td className="p-4 text-zinc-500">
+                      {category.parent_id
+                        ? categoryNameById[category.parent_id] || "Unknown"
+                        : "—"}
+                    </td>
                     <td className="p-4 text-zinc-600 font-mono text-sm">{category.slug}</td>
                     <td className="p-4 text-zinc-500">{category.products?.length || 0}</td>
                     <td className="p-4 text-right">
@@ -247,6 +279,23 @@ export default function AdminCategoriesPage() {
                   className="h-12 w-full rounded-xl border px-4"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium">Parent Category</label>
+                <select
+                  name="parent_id"
+                  value={form.parent_id}
+                  onChange={handleChange}
+                  className="h-12 w-full rounded-xl border px-4"
+                >
+                  <option value="">None / Top-level</option>
+                  {parentOptions.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex gap-3 mt-6">

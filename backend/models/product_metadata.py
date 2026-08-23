@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -24,8 +24,9 @@ class ProductMetadata(Base):
     color = Column(String, nullable=True)
     material = Column(String, nullable=True)
     pattern = Column(String, nullable=True)
-    season = Column(String, nullable=True)
-    occasion = Column(String, nullable=True)
+    # Multi-select values stored as PostgreSQL text arrays.
+    season = Column(ARRAY(String), nullable=True)
+    occasion = Column(ARRAY(String), nullable=True)
     style = Column(String, nullable=True)
 
     created_at = Column(
