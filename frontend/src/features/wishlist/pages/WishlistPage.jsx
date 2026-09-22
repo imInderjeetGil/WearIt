@@ -127,7 +127,7 @@ className="rounded-2xl border-gray-300 bg-white shadow transition hover:shadow-l
 
 <Link
 
-to={`/products/${item.product.slug}`}
+to={`/products/${item.product.id}`}
 
 >
 

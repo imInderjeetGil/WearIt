@@ -141,45 +141,46 @@ export default function AdminCategoriesPage() {
       ) : (
         <div className="rounded-2xl border bg-white overflow-hidden">
           {/* Mobile Card View */}
-          <div className="block lg:hidden divide-y divide-zinc-100">
-            {categories.map((category) => (
-              <div key={category.id} className="p-4 flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm truncate">{category.name}</p>
-                  <p className="text-xs text-zinc-500 font-mono mt-0.5">{category.slug}</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">
-                    {category.parent_id
-                      ? `Under ${categoryNameById[category.parent_id] || "Unknown"}`
-                      : "Top-level"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-zinc-500 bg-zinc-100 px-2 py-1 rounded-full">
-                    {category.products?.length || 0} items
-                  </span>
-                  <button
-                    onClick={() => openEdit(category)}
-                    className="p-1.5 rounded-lg text-zinc-600 hover:bg-zinc-100 transition"
-                    title="Edit"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(category.id)}
-                    disabled={deletingId === category.id}
-                    className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
-                    title="Delete"
-                  >
-                    {deletingId === category.id ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      <Trash2 size={18} />
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+<div className="block lg:hidden divide-y divide-zinc-100">
+  {categories.map((category) => (
+    <div key={category.id} className="p-4 flex items-center justify-between gap-3">
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-sm truncate">{category.name}</p>
+        <p className="text-xs text-zinc-500 font-mono mt-0.5">{category.slug}</p>
+        <p className="text-xs text-zinc-500 mt-0.5">
+          {category.parent_id
+            ? `Under ${categoryNameById[category.parent_id] || "Unknown"}`
+            : "Top-level"}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Update this line */}
+        <span className="text-xs text-zinc-500 bg-zinc-100 px-2 py-1 rounded-full">
+          {category.product_count ?? 0} items
+        </span>
+        <button
+          onClick={() => openEdit(category)}
+          className="p-1.5 rounded-lg text-zinc-600 hover:bg-zinc-100 transition"
+          title="Edit"
+        >
+          <Edit2 size={18} />
+        </button>
+        <button
+          onClick={() => handleDelete(category.id)}
+          disabled={deletingId === category.id}
+          className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition"
+          title="Delete"
+        >
+          {deletingId === category.id ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : (
+            <Trash2 size={18} />
+          )}
+        </button>
+      </div>
+    </div>
+  ))}
+</div>
 
           {/* Desktop Table View */}
           <div className="hidden lg:block overflow-x-auto">
@@ -203,7 +204,9 @@ export default function AdminCategoriesPage() {
                         : "—"}
                     </td>
                     <td className="p-4 text-zinc-600 font-mono text-sm">{category.slug}</td>
-                    <td className="p-4 text-zinc-500">{category.products?.length || 0}</td>
+                    <td className="p-4 text-zinc-500">
+  {category.product_count ?? 0}
+</td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button

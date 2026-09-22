@@ -15,6 +15,7 @@ All scoring weights and compatibility maps live in the constants block so
 they are centralized and easy to tune.
 """
 
+import logging
 from datetime import datetime
 
 from sqlalchemy import or_
@@ -24,6 +25,9 @@ from models.category import Category
 from models.product import Product
 from models.product_size import ProductSize
 from schemas.fashion_intent import FashionIntent
+
+# Pipeline debugging: enable with LOG_LEVEL=DEBUG (logger "wearit.look").
+logger = logging.getLogger("wearit.look")
 
 # ---------------------------------------------------------------------------
 # Tunable scoring weights (sums to a 0-115 scale)
@@ -61,7 +65,13 @@ TOP_BOTTOM_COMPAT = {
     "shirts": {"jeans", "trousers", "shorts"},
     "hoodies": {"jeans", "trousers", "shorts"},
     "jackets": {"jeans", "trousers", "shorts"},
-    "kurtas": {"trousers", "jeans", "leggings"},
+    # Kurta (TOP) pairs with dedicated ethnic bottoms — pajama/churidar/
+    # ethnic-bottom style subcategories — as well as regular trousers,
+    # jeans and leggings.
+    "kurtas": {
+        "trousers", "jeans", "leggings",
+        "pajamas", "churidars", "ethnic-bottoms",
+    },
 }
 
 TOP_FOOTWEAR_COMPAT = {
@@ -69,7 +79,7 @@ TOP_FOOTWEAR_COMPAT = {
     "shirts": {"sneakers", "boots", "sandals"},
     "hoodies": {"sneakers", "boots"},
     "jackets": {"sneakers", "boots", "heels"},
-    "kurtas": {"sandals", "sneakers"},
+    "kurtas": {"sandals", "sneakers", "heels", "flats"},
 }
 
 DRESS_FOOTWEAR_COMPAT = {
@@ -154,14 +164,30 @@ def _available_stock(product: Product) -> int:
     return product.quantity or 0
 
 
+def _has_complete_role_coverage(candidates: list[tuple[str, Product]]) -> bool:
+    """True when a candidate pool can form at least one complete outfit
+    (Top+Bottom+Footwear, or Dress+Footwear)."""
+    roles = {role for role, _ in candidates}
+    standard = {"top", "bottom", "shoes"} <= roles
+    dress = "dress" in roles and "shoes" in roles
+    return standard or dress
+
+
 def _load_candidates(
     db: Session,
     intent: FashionIntent,
     root_slugs: dict[int, str],
     gender: str | None,
 ):
-    """Hard-filtered candidate products (in stock, within budget, gender-ok,
-    category-relevant when the intent narrows the search)."""
+    """Candidate products (in stock, within budget, gender-ok).
+
+    Category/subcategory hints from the intent NARROW the pool, but never
+    starve it: an intent like subcategories=['kurtas'] (with unresolved
+    siblings such as 'pajamas' dropped by the normalizer) must not prune
+    away every bottom/shoe needed to finish a look. The narrowest tier with
+    complete role coverage wins; otherwise the pool widens progressively.
+    Relevance is preserved via scoring (+15 category match), not exclusion.
+    """
     query = (
         db.query(Product)
         .options(
@@ -198,26 +224,69 @@ def _load_candidates(
 
     products = query.all()
 
-    allowed_roots = set(intent.categories) or None
-    allowed_subs = set(intent.subcategories) or None
-
-    candidates = []
+    # Base pool: everything that can play a role in an outfit.
+    pool: list[tuple[str, Product]] = []
     for product in products:
         root_slug = root_slugs.get(product.category_id)
         role = CATEGORY_ROLES.get(root_slug)
         if role is None:
             continue  # not part of any outfit role
+        pool.append((role, product))
 
+    logger.debug(
+        "candidates: %d products in base pool (stock/budget/gender filters)",
+        len(pool),
+    )
+
+    allowed_roots = set(intent.categories) or None
+    allowed_subs = set(intent.subcategories) or None
+
+    if not allowed_roots and not allowed_subs:
+        return pool
+
+    def _matches_narrowing(product: Product) -> bool:
         category_slug = product.category.slug if product.category else None
+        if allowed_subs is not None and category_slug in allowed_subs:
+            return True
+        if allowed_roots is not None and root_slugs.get(product.category_id) in allowed_roots:
+            return True
+        return False
 
-        if allowed_roots is not None and root_slug not in allowed_roots:
-            continue
-        if allowed_subs is not None and category_slug not in allowed_subs:
-            continue
+    # Narrowest-first tiers; the first tier that can still form a complete
+    # outfit wins. Unresolved LLM subcategories must never zero out a slot.
+    tiers: list[tuple[str, list[tuple[str, Product]]]] = [
+        (
+            "intent categories/subcategories",
+            [(role, p) for role, p in pool if _matches_narrowing(p)],
+        ),
+        ("full catalog fallback", pool),
+    ]
 
-        candidates.append((role, product))
+    chosen: list[tuple[str, Product]] = pool
+    for label, tier_candidates in tiers:
+        role_counts = {}
+        for role, _ in tier_candidates:
+            role_counts[role] = role_counts.get(role, 0) + 1
 
-    return candidates
+        if _has_complete_role_coverage(tier_candidates):
+            logger.debug(
+                "candidates: narrowing '%s' kept %d products %s (complete role coverage)",
+                label,
+                len(tier_candidates),
+                role_counts,
+            )
+            chosen = tier_candidates
+            break
+
+        logger.debug(
+            "candidates: narrowing '%s' has %d products %s — incomplete role "
+            "coverage, widening",
+            label,
+            len(tier_candidates),
+            role_counts,
+        )
+
+    return chosen
 
 
 def _is_avoided(product: Product, intent: FashionIntent) -> bool:
@@ -417,18 +486,26 @@ def _assemble_looks(scored: list[tuple], budget: float | None):
         pool.sort(key=lambda row: (-row[0], row[1]))
 
     combos: list[tuple[float, float, list]] = []
+    rejection_reasons: dict[str, int] = {}
+    budget_rejections = 0
+
+    def _reject(reason: str) -> None:
+        rejection_reasons[reason] = rejection_reasons.get(reason, 0) + 1
 
     # Standard look: Topwear + Bottomwear + Footwear (compatibility-checked)
     for top in slots["top"][:SLOT_POOL]:
         top_sub = top[3]
         for bottom in slots["bottom"][:SLOT_POOL]:
             if not _compatible(top_sub, bottom[3], TOP_BOTTOM_COMPAT):
+                _reject(f"incompatible top/bottom: {top_sub}+{bottom[3]}")
                 continue
             for shoes in slots["shoes"][:SLOT_POOL]:
                 if not _compatible(top_sub, shoes[3], TOP_FOOTWEAR_COMPAT):
+                    _reject(f"incompatible top/footwear: {top_sub}+{shoes[3]}")
                     continue
                 total = top[1] + bottom[1] + shoes[1]
                 if budget is not None and total > budget:
+                    budget_rejections += 1
                     continue
                 items = [
                     (*top, "top"),
@@ -444,9 +521,11 @@ def _assemble_looks(scored: list[tuple], budget: float | None):
         dress_sub = dress[3]
         for shoes in slots["shoes"][:SLOT_POOL]:
             if not _compatible(dress_sub, shoes[3], DRESS_FOOTWEAR_COMPAT):
+                _reject(f"incompatible dress/footwear: {dress_sub}+{shoes[3]}")
                 continue
             base_total = dress[1] + shoes[1]
             if budget is not None and base_total > budget:
+                budget_rejections += 1
                 continue
             items = [(*dress, "dress"), (*shoes, "shoes")]
             accessory = next(
@@ -466,6 +545,13 @@ def _assemble_looks(scored: list[tuple], budget: float | None):
                 base_total + (accessory[1] if accessory else 0),
                 items,
             ))
+
+    logger.debug(
+        "assembly: %d valid combos, %d budget rejections; rejections: %s",
+        len(combos),
+        budget_rejections,
+        rejection_reasons or "none",
+    )
 
     # Dedupe identical product sets, keep the highest-scoring variant.
     seen: dict[frozenset, tuple] = {}
@@ -550,6 +636,13 @@ def recommend_looks(db: Session, intent: FashionIntent, current_user=None) -> di
                 "approximate": approximate,
             }
         )
+
+    logger.debug(
+        "looks: assembled %d look(s) at relaxation level '%s' (approximate=%s)",
+        len(looks),
+        chosen_level,
+        approximate,
+    )
 
     message = None
     if not looks:

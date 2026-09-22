@@ -18,7 +18,10 @@ class CategoryUpdate(BaseModel):
 
 class CategoryResponse(CategoryBase):
     id: int
+    name: str
+    slug: str
     parent_id: int | None = None
-
+    product_count: int = 0
+    
     class Config:
         from_attributes = True

@@ -1,33 +1,47 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { Edit2, Trash2, Loader2, ExternalLink } from "lucide-react";
+import { Edit2, Trash2, Loader2, ExternalLink, Search, Filter } from "lucide-react";
 import { toast } from "react-hot-toast";
 
-import { getProducts } from "../../catalog/api/products";
-import { deleteProduct } from "../../catalog/api/products";
+import { getProducts, deleteProduct } from "../../catalog/api/products";
+import { getCategories } from "../../catalog/api/categories";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
 
-  const fetchProducts = useCallback(async () => {
+  // Filter States
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await getProducts({ page: 1, limit: 100 });
-      const list = Array.isArray(data) ? data : data.products || data.items || data.data || [];
-      setProducts(list);
+      const [prodRes, catRes] = await Promise.all([
+        getProducts({ page: 1, limit: 100 }),
+        getCategories(),
+      ]);
+
+      const prodList = Array.isArray(prodRes.data)
+        ? prodRes.data
+        : prodRes.data?.products || prodRes.data?.items || prodRes.data?.data || [];
+      setProducts(prodList);
+
+      const catList = Array.isArray(catRes.data) ? catRes.data : catRes.data || [];
+      setCategories(catList);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load products");
+      toast.error("Failed to load products data");
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void fetchProducts();
-  }, [fetchProducts]);
+    void fetchData();
+  }, [fetchData]);
 
   async function handleDelete(id) {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
@@ -44,8 +58,27 @@ export default function AdminProductsPage() {
     }
   }
 
+  // Filtered Products Memoized Logic
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      // 1. Search Query Filter (Matches Name or ID)
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(product.id).includes(searchQuery);
+
+      // 2. Category Filter (Matches Category ID)
+      const matchesCategory =
+        selectedCategory === "all" ||
+        String(product.category_id) === String(selectedCategory) ||
+        String(product.category?.id) === String(selectedCategory);
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, selectedCategory]);
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-zinc-500">Admin</p>
@@ -57,6 +90,38 @@ export default function AdminProductsPage() {
         >
           Add Product
         </Link>
+      </div>
+
+      {/* Search & Category Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        {/* Search Input */}
+        <div className="relative flex-1">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="text"
+            placeholder="Search products by name or ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-12 w-full rounded-xl border bg-white pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-black"
+          />
+        </div>
+
+        {/* Category Dropdown Filter */}
+        <div className="relative min-w-[200px]">
+          <Filter size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="h-12 w-full appearance-none rounded-xl border bg-white pl-11 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-black cursor-pointer"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -71,7 +136,7 @@ export default function AdminProductsPage() {
         <div className="rounded-2xl border bg-white overflow-hidden">
           {/* Mobile Card View */}
           <div className="block lg:hidden divide-y divide-zinc-100">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <div key={product.id} className="p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   {product.image_url && (
@@ -166,7 +231,7 @@ export default function AdminProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} className="hover:bg-zinc-50">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -251,15 +316,28 @@ export default function AdminProductsPage() {
               </tbody>
             </table>
           </div>
-          {products.length === 0 && (
+
+          {filteredProducts.length === 0 && (
             <div className="p-12 text-center text-zinc-500">
-              <p>No products yet</p>
-              <Link
-                to="/admin-panel/products/new"
-                className="mt-4 inline-block text-black font-semibold hover:underline"
-              >
-                Create your first product
-              </Link>
+              <p>No products found matching your filters</p>
+              {products.length === 0 ? (
+                <Link
+                  to="/admin-panel/products/new"
+                  className="mt-4 inline-block text-black font-semibold hover:underline"
+                >
+                  Create your first product
+                </Link>
+              ) : (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedCategory("all");
+                  }}
+                  className="mt-4 inline-block text-black font-semibold hover:underline"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
         </div>

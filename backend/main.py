@@ -22,6 +22,7 @@ from api import (
     recommendations,
     review,
     size,
+    try_on,
     wishlist,
 )
 
@@ -104,6 +105,7 @@ app.include_router(profile.router)
 app.include_router(product.router)
 app.include_router(category.router)
 app.include_router(size.router)
+app.include_router(try_on.router)
 app.include_router(cart.router)
 app.include_router(payment.router)
 app.include_router(order.router)

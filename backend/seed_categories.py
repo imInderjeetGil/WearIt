@@ -3,7 +3,7 @@ import requests
 BASE_URL = "http://127.0.0.1:8000"
 
 # Put your LOCAL admin JWT here.
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3ODczNzMyNzB9.2WJZunpJZl3bvN8BwD0i8pRMeb5kJyNtB3NVOqjsGD4"
+TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3ODc3MjAxMzd9.tgHg5M4wu9nwa10PBSaOcHbSorFIfKb6lr5BzAr1i5c"
 
 HEADERS = {
     "Authorization": f"Bearer {TOKEN}",
@@ -21,6 +21,8 @@ CATEGORY_TREE = {
     ],
     "Bottomwear": [
         "Jeans",
+        "Pajamas",
+        "Ethnic Bottoms",
         "Trousers",
         "Shorts",
         "Skirts",
@@ -108,12 +110,12 @@ def main():
 
     existing = response.json()
 
-    if existing:
-        print(
-            f"WARNING: {len(existing)} categories already exist."
-        )
-        print("This script is intended for the fresh local DB.")
-        raise SystemExit(1)
+    # if existing:
+    #     print(
+    #         f"WARNING: {len(existing)} categories already exist."
+    #     )
+    #     print("This script is intended for the fresh local DB.")
+    #     raise SystemExit(1)
 
     print("Database is empty. Starting seed...\n")
 

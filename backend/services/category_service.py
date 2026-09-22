@@ -1,13 +1,40 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-
+from sqlalchemy import func
 from models.category import Category
 from models.product import Product
 from schemas.category import CategoryCreate, CategoryUpdate
 
 
 def get_categories(db: Session):
-    return db.query(Category).order_by(Category.name).all()
+    categories = db.query(Category).order_by(Category.name).all()
+
+    # Direct database count query
+    direct_counts = dict(
+        db.query(Product.category_id, func.count(Product.id))
+        .group_by(Product.category_id)
+        .all()
+    )
+
+    result = []
+    for cat in categories:
+        # Sum direct products + child subcategory products
+        child_ids = [c.id for c in categories if c.parent_id == cat.id]
+        total_count = direct_counts.get(cat.id, 0) + sum(
+            direct_counts.get(cid, 0) for cid in child_ids
+        )
+
+        # Dictionary format so Pydantic picks product_count explicitly
+        cat_dict = {
+            "id": cat.id,
+            "name": cat.name,
+            "slug": cat.slug,
+            "parent_id": cat.parent_id,
+            "product_count": total_count,
+        }
+        result.append(cat_dict)
+
+    return result
 
 
 def get_category(db: Session, category_id: int):

@@ -11,12 +11,12 @@ COLORS = (
 )
 MATERIALS = (
     "Cotton", "Polyester", "Denim", "Wool", "Silk", "Linen",
-    "Nylon", "Rayon", "Leather", "Blended",
+    "Nylon", "Rayon", "Leather", "Synthetic","Blended",
 )
 PATTERNS = ("Solid", "Striped", "Checked", "Floral", "Printed", "Graphic", "Camo", "Plain","Embroidered")
 SEASONS = ("Summer", "Winter", "Monsoon", "Autumn", "Spring", "All Season")
 OCCASIONS = ("Casual", "Formal", "Party", "Sports", "Office", "Ethnic", "Streetwear","Wedding","Festive")
-STYLES = ("Minimal", "Streetwear", "Casual", "Formal", "Vintage", "Sport", "Luxury")
+STYLES = ("Minimal", "Streetwear", "Casual", "Formal", 'Ethnic',"Vintage", "Sport", "Luxury")
 
 
 class ProductMetadataInput(BaseModel):

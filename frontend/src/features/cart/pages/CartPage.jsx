@@ -1,15 +1,20 @@
 // src/pages/CartPage.jsx
 
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Trash2, ShoppingBag } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Loader2, ShoppingBag, Sparkles, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import useCartStore from "../store/cart-store";
 import { getSellingPrice } from "../../../shared/utils/pricing";
-import TryOnComingSoon from "../../../shared/components/TryOnComingSoon";
+import TryOnReferenceModal from "../components/TryOnReferenceModal";
+import TryOnPreviewModal from "../components/TryOnPreviewModal";
+import { generateTryOn } from "../api/tryon";
+import { getProfile } from "../../profile/api/profile";
 
 export default function CartPage() {
+  const navigate = useNavigate();
+
   const {
     items,
     loading,
@@ -19,11 +24,67 @@ export default function CartPage() {
     subtotal,
   } = useCartStore();
 
+  // AI Try-On state
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [tryOnError, setTryOnError] = useState(null);
+  // product_id -> category slot ("Topwear"/"Bottomwear"/...) returned by the
+  // generate endpoint; used to group items in the preview modal.
+  const [slotByProduct, setSlotByProduct] = useState({});
+
   useEffect(() => {
     void fetchCart().catch(() => {
       toast.error("Unable to load your cart.");
     });
   }, [fetchCart]);
+
+  async function runGeneration() {
+    setGenerating(true);
+    setTryOnError(null);
+
+    try {
+      const { data } = await generateTryOn();
+
+      setPreviewUrl(data.tryon_image_url);
+
+      const slots = {};
+      (data.items || []).forEach((item) => {
+        slots[item.product_id] = item.category_slot;
+      });
+      setSlotByProduct(slots);
+    } catch (err) {
+      setTryOnError(
+        err.response?.data?.detail ?? "Try-On generation failed."
+      );
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  async function handlePreviewClick() {
+    let profile;
+    try {
+      ({ data: profile } = await getProfile());
+    } catch {
+      toast.error("Could not load your profile.");
+      return;
+    }
+
+    if (!profile?.reference_image_url) {
+      // No reference photo yet → open the setup modal first.
+      setUploadOpen(true);
+      return;
+    }
+
+    setPreviewOpen(true);
+    void runGeneration();
+  }
+
+  function handleRegenerate() {
+    void runGeneration();
+  }
 
   if (loading) {
     return (
@@ -157,9 +218,45 @@ export default function CartPage() {
 
         </div>
 
-        {/* AI Try-On teaser (coming soon — no generation) */}
+        {/* AI Try-On + Summary */}
         <div className="space-y-6">
-          <TryOnComingSoon compact />
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-700 p-6 text-white">
+            <div className="absolute -right-6 -top-6 h-40 w-40 rounded-full bg-white/5" />
+            <div className="absolute -bottom-8 -left-4 h-32 w-32 rounded-full bg-white/5" />
+
+            <div className="relative">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 backdrop-blur">
+                  <Sparkles size={20} />
+                </span>
+
+                <div>
+                  <p className="text-lg font-bold">✨ Preview Outfit on Me</p>
+                  <p className="mt-0.5 text-sm text-zinc-300">
+                    See your entire cart styled on your photo.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handlePreviewClick}
+                disabled={generating}
+                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-white font-semibold text-zinc-900 transition hover:bg-zinc-100 disabled:opacity-60"
+              >
+                {generating ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Generating preview...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    Try-On Preview
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
 
           {/* Summary */}
           <div className="h-fit rounded-2xl border p-6">
@@ -207,6 +304,38 @@ export default function CartPage() {
 
           </div>
         </div>
+
+        {/* AI Try-On modals */}
+        <TryOnReferenceModal
+          open={uploadOpen}
+          onClose={() => setUploadOpen(false)}
+          onSaved={() => {
+            setUploadOpen(false);
+            setPreviewOpen(true);
+            void runGeneration();
+          }}
+        />
+
+        <TryOnPreviewModal
+          open={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          lines={items.map((item) => ({
+            id: item.id,
+            productId: item.product.id,
+            name: item.product.name,
+            imageUrl: item.product.image_url,
+            price: getSellingPrice(item.product),
+            sizeName: item.size?.name ?? null,
+            quantity: item.quantity,
+          }))}
+          total={subtotal()}
+          imageUrl={previewUrl}
+          loading={generating}
+          error={tryOnError}
+          slotByProduct={slotByProduct}
+          onRegenerate={handleRegenerate}
+          onCheckout={() => navigate("/checkout")}
+        />
 
       </div>
 

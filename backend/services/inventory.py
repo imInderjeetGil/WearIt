@@ -39,6 +39,7 @@ CATEGORY_SIZE_FAMILY = {
     "jackets": "clothing",
     "kurtas": "clothing",
     "jeans": "waist",
+    "pajamas": "waist",
     "trousers": "waist",
     "shorts": "waist",
     "skirts": "waist",

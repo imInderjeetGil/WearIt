@@ -26,12 +26,12 @@ const COLORS = [
 ];
 const MATERIALS = [
   "Cotton", "Polyester", "Denim", "Wool", "Silk", "Linen",
-  "Nylon", "Rayon", "Leather", "Blended",
+  "Nylon", "Rayon", "Leather", "Synthetic","Blended",
 ];
 const PATTERNS = ["Solid", "Striped", "Checked", "Floral", "Printed", "Graphic", "Camo", "Plain","Embroidered"];
 const SEASONS = ["Summer", "Winter", "Monsoon", "Autumn", "Spring", "All Season"];
 const OCCASIONS = ["Casual", "Formal", "Party", "Sports", "Office", "Ethnic", "Streetwear","Wedding","Festive"];
-const STYLES = ["Minimal", "Streetwear", "Casual", "Formal", "Vintage", "Sport", "Luxury"];
+const STYLES = ["Minimal", "Streetwear", "Casual", "Formal", 'Ethnic', "Vintage", "Sport", "Luxury"];
 
 function MetadataSelect({ label, name, value, onChange, options }) {
   return (
