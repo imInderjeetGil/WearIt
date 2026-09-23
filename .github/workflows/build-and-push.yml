@@ -1,0 +1,69 @@
+name: Build and Push WearIt Images
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: wearit-production
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REGISTRY: 190936935492.dkr.ecr.ap-south-1.amazonaws.com
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::190936935492:role/GitHubActions-WearIt
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: github-actions-wearit
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region "${AWS_REGION}" |
+            docker login --username AWS --password-stdin "${ECR_REGISTRY}"
+
+      - name: Build backend image
+        run: |
+          docker build \
+            --tag "${ECR_REGISTRY}/wearit-backend:${IMAGE_TAG}" \
+            ./backend
+
+      - name: Build frontend image
+        run: |
+          docker build \
+            --tag "${ECR_REGISTRY}/wearit-frontend:${IMAGE_TAG}" \
+            ./frontend
+
+      - name: Push backend image
+        run: |
+          docker push "${ECR_REGISTRY}/wearit-backend:${IMAGE_TAG}"
+
+      - name: Push frontend image
+        run: |
+          docker push "${ECR_REGISTRY}/wearit-frontend:${IMAGE_TAG}"
+
+      - name: Deployment summary
+        run: |
+          echo "Backend:  ${ECR_REGISTRY}/wearit-backend:${IMAGE_TAG}"
+          echo "Frontend: ${ECR_REGISTRY}/wearit-frontend:${IMAGE_TAG}"
