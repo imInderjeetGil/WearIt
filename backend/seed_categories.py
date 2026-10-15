@@ -3,7 +3,7 @@ import requests
 BASE_URL = "http://127.0.0.1:8000"
 
 # Put your LOCAL admin JWT here.
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3ODc3MjAxMzd9.tgHg5M4wu9nwa10PBSaOcHbSorFIfKb6lr5BzAr1i5c"
+TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE3OTE5NTkyOTl9.OTBB9u_V1hY3OJDdHIzcT1BddGzQV9ieWNN2TrI-SPU"
 
 HEADERS = {
     "Authorization": f"Bearer {TOKEN}",

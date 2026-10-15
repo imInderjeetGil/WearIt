@@ -5,7 +5,7 @@
 ### AI-powered fashion shopping, personalized discovery, and virtual try-on.
 
 <p align="center">
-  <img src="YOUR_LOGO_OR_BANNER_URL" alt="WearIt Logo" width="180" />
+  <img src="./frontend/assets/image (2).png" alt="WearIt Logo" width="180" />
 </p>
 
 <p>
