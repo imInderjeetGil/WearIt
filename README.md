@@ -9,7 +9,7 @@
 </p>
 
 <p>
-  <a href="https://wearit.inderforge.app" target="blank">Live Demo</a>
+  <a href="https://wearit.inderforge.app" target="_blank">Live Demo</a>
   ·
   <a href="https://github.com/imInderjeetGil/WearIt/issues">Report Bug</a>
   ·
